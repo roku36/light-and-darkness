@@ -9,7 +9,13 @@ npm install
 npm run dev
 npm test
 npm run build
+npm run desktop:build
+npm run desktop:build:mac
+npm run desktop:build:windows
+npm run desktop:build:windows:portable
 ```
+
+Desktop packaging and regeneration notes are in [docs/desktop-build.md](docs/desktop-build.md).
 
 ## Controls
 

@@ -1,0 +1,16 @@
+[package]
+name = "light-and-darkness"
+version = "0.1.0"
+description = "A fullscreen light and shadow puzzle game."
+authors = ["Roku"]
+edition = "2021"
+
+[lib]
+name = "light_and_darkness_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.6.2", features = [] }
+
+[dependencies]
+tauri = { version = "2.11.2", features = [] }

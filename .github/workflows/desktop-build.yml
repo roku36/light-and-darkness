@@ -1,0 +1,61 @@
+name: Desktop Build
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  macos:
+    name: macOS .app
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build .app
+        run: npm run desktop:build:mac
+
+      - name: Archive .app
+        run: ditto -c -k --sequesterRsrc --keepParent "src-tauri/target/release/bundle/macos/光と影の宝.app" "光と影の宝-macos-app.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-app
+          path: 光と影の宝-macos-app.zip
+
+  windows:
+    name: Windows .exe
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build installer .exe
+        run: npm run desktop:build:windows
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-exe
+          path: |
+            src-tauri/target/release/light-and-darkness.exe
+            src-tauri/target/release/bundle/nsis/*-setup.exe

@@ -6,6 +6,11 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "tsc -b && vite build",
+    "desktop:dev": "tauri dev",
+    "desktop:build": "tauri build",
+    "desktop:build:mac": "tauri build --bundles app",
+    "desktop:build:windows": "tauri build --bundles nsis",
+    "desktop:build:windows:portable": "tauri build --no-bundle",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -13,6 +18,7 @@
     "phaser": "^3.90.0"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.11.2",
     "@types/node": "^22.15.3",
     "typescript": "^5.8.3",
     "vite": "^6.3.5",
