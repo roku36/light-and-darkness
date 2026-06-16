@@ -16,10 +16,10 @@ import { createLightMap, updateLightMap } from './visualLighting';
 
 const TILE = 48;
 const MOVE_MS = 160;
-const UNDO_MOVE_MS = 60;
+const UNDO_MOVE_MS = 100;
 const FLAME_FRAME_MS = 90;
 const UNDO_FLASH_MS = 34;
-const UNDO_FLASH_ALPHA = 0.05;
+const UNDO_FLASH_ALPHA = 0.0;
 const GOAL_EMIT_INTERVAL_MS = 55;
 
 type FacingDirection = 'left' | 'right';
