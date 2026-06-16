@@ -20,7 +20,7 @@ const UNDO_MOVE_MS = 60;
 const FLAME_FRAME_MS = 90;
 const UNDO_FLASH_MS = 34;
 const UNDO_FLASH_ALPHA = 0.05;
-const GOAL_PARTICLE_COUNT = 36;
+const GOAL_EMIT_INTERVAL_MS = 55;
 
 type FacingDirection = 'left' | 'right';
 
@@ -32,6 +32,11 @@ interface SceneData {
   onTitle: () => void;
 }
 
+interface GoalArrivalEffect {
+  container: Phaser.GameObjects.Container;
+  timer: Phaser.Time.TimerEvent;
+}
+
 export class GameScene extends Phaser.Scene {
   private session!: GameSession;
   private level!: LevelDefinition;
@@ -39,6 +44,7 @@ export class GameScene extends Phaser.Scene {
   private onComplete!: SceneData['onComplete'];
   private onUndoPrompt!: SceneData['onUndoPrompt'];
   private onTitle!: SceneData['onTitle'];
+  private world!: Phaser.GameObjects.Container;
   private board!: Phaser.GameObjects.Container;
   private lightMap?: Phaser.GameObjects.Image;
   private lightAnimationStep = 0;
@@ -53,7 +59,7 @@ export class GameScene extends Phaser.Scene {
   private keys!: Record<string, Phaser.Input.Keyboard.Key>;
   private actorFacing: Record<ActorKind, FacingDirection> = { light: 'left', dark: 'left' };
   private goalEffectLayer!: Phaser.GameObjects.Container;
-  private goalEffects: Partial<Record<ActorKind, Phaser.GameObjects.Container>> = {};
+  private goalEffects: Partial<Record<ActorKind, GoalArrivalEffect>> = {};
 
   constructor() {
     super('game');
@@ -75,8 +81,10 @@ export class GameScene extends Phaser.Scene {
 
   create(): void {
     this.cameras.main.setBackgroundColor('#000000');
+    this.world = this.add.container(0, 0);
     this.board = this.add.container(0, 0);
     this.goalEffectLayer = this.add.container(0, 0);
+    this.world.add([this.board, this.goalEffectLayer]);
     this.applyOneBitFilter();
     ensureSpriteAnimations(this);
     this.cursors = this.input.keyboard!.createCursorKeys();
@@ -158,10 +166,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private applyOneBitFilter(): void {
-    this.board.resetPostPipeline(true);
-    this.goalEffectLayer.resetPostPipeline(true);
-    if (this.oneBitFilterEnabled) this.board.setPostPipeline('OneBitPipeline');
-    if (this.oneBitFilterEnabled) this.goalEffectLayer.setPostPipeline('OneBitPipeline');
+    this.world.resetPostPipeline(true);
+    if (this.oneBitFilterEnabled) this.world.setPostPipeline('OneBitPipeline');
   }
 
   private performMove(direction: Direction): void {
@@ -351,42 +357,54 @@ export class GameScene extends Phaser.Scene {
     const centerY = (point.y + 0.5) * TILE;
     const color = kind === 'light' ? 0x000000 : 0xffffff;
     const container = this.add.container(0, 0);
-    for (let index = 0; index < GOAL_PARTICLE_COUNT; index += 1) {
-      const angle = (index / GOAL_PARTICLE_COUNT) * Math.PI * 2;
-      const radius = 21 + (index % 6) * 2;
-      const size = index % 5 === 0 ? 3 : 2;
-      const wobble = 1 + (index % 4);
-      const particle = this.add.rectangle(
-        centerX + Math.cos(angle) * radius,
-        centerY + Math.sin(angle) * radius,
-        size,
-        size,
-        color,
-        1,
-      );
-      container.add(particle);
-      this.tweens.add({
-        targets: particle,
-        x: centerX + Math.cos(angle) * (radius + wobble),
-        y: centerY + Math.sin(angle) * (radius + wobble),
-        alpha: { from: 0.4, to: 1 },
-        duration: 700 + (index % 7) * 45,
-        delay: index * 18,
-        yoyo: true,
-        repeat: -1,
-        ease: 'Sine.easeInOut',
-      });
-    }
-    this.goalEffects[kind] = container;
     this.goalEffectLayer.add(container);
+    const emit = () => this.emitGoalParticle(container, centerX, centerY, color);
+    for (let index = 0; index < 12; index += 1) emit();
+    const timer = this.time.addEvent({
+      delay: GOAL_EMIT_INTERVAL_MS,
+      loop: true,
+      callback: emit,
+    });
+    this.goalEffects[kind] = { container, timer };
   }
 
   private removeGoalArrivalEffect(kind: ActorKind): void {
     const effect = this.goalEffects[kind];
     if (!effect) return;
-    effect.list.forEach((child) => this.tweens.killTweensOf(child));
-    effect.destroy(true);
+    effect.timer.remove(false);
+    effect.container.list.forEach((child) => this.tweens.killTweensOf(child));
+    effect.container.destroy(true);
     delete this.goalEffects[kind];
+  }
+
+  private emitGoalParticle(
+    container: Phaser.GameObjects.Container,
+    centerX: number,
+    centerY: number,
+    color: number,
+  ): void {
+    const angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+    const startRadius = Phaser.Math.FloatBetween(2, 5);
+    const distance = Phaser.Math.FloatBetween(20, 34);
+    const size = Phaser.Math.Between(2, 3);
+    const particle = this.add.rectangle(
+      centerX + Math.cos(angle) * startRadius,
+      centerY + Math.sin(angle) * startRadius,
+      size,
+      size,
+      color,
+      1,
+    );
+    container.add(particle);
+    this.tweens.add({
+      targets: particle,
+      x: centerX + Math.cos(angle) * distance,
+      y: centerY + Math.sin(angle) * distance,
+      alpha: 0,
+      duration: Phaser.Math.Between(420, 640),
+      ease: 'Quad.easeOut',
+      onComplete: () => particle.destroy(),
+    });
   }
 
   private layoutBoard(): void {
@@ -396,13 +414,15 @@ export class GameScene extends Phaser.Scene {
     const boardHeight = this.level.height * TILE;
     const integerScale = Math.max(1, Math.floor(Math.min(availableWidth / boardWidth, availableHeight / boardHeight)));
     const scale = Math.min(integerScale, 2);
-    this.board.setScale(scale);
-    this.board.setPosition(
+    this.world.setScale(scale);
+    this.world.setPosition(
       alignToScale((this.scale.width - boardWidth * scale) / 2, scale),
       alignToScale((this.scale.height - boardHeight * scale) / 2, scale),
     );
-    this.goalEffectLayer.setScale(scale);
-    this.goalEffectLayer.setPosition(this.board.x, this.board.y);
+    this.board.setScale(1);
+    this.board.setPosition(0, 0);
+    this.goalEffectLayer.setScale(1);
+    this.goalEffectLayer.setPosition(0, 0);
   }
 }
 
