@@ -7,6 +7,7 @@ import { shadowPolygon, type PixelPoint, type PixelRect } from './shadowGeometry
 const FLOOR_TEXTURE_KEY = 'board-floor-luminance';
 export const GROUND_BASE_LUMINANCE = 0.18;
 export const GROUND_PATTERN_LUMINANCE = 0.22;
+const GROUND_BASE_VERTICAL_SCALE = 0.5;
 const DIRECT_LIGHT_BASE_LUMINANCE = 0.52;
 const DIRECT_LIGHT_RELIEF_LUMINANCE = 0.58;
 const DIRECT_LIGHT_HORIZONTAL_SCALE = 0.62;
@@ -107,7 +108,7 @@ export function visualLightBlockers(level: LevelDefinition, state: GameState): P
 }
 
 export function groundBaseLuminance(x: number, y: number): number {
-  return GROUND_BASE_LUMINANCE + terrainHeight(x, y) * GROUND_PATTERN_LUMINANCE;
+  return GROUND_BASE_LUMINANCE + terrainBaseHeight(x, y) * GROUND_PATTERN_LUMINANCE;
 }
 
 function directLightLuminance(
@@ -198,6 +199,10 @@ function terrainHeight(x: number, y: number): number {
   return valueNoise(x * 0.075, y * 0.075) * 0.62
     + valueNoise(x * 0.19 + 31, y * 0.19 + 17) * 0.28
     + valueNoise(x * 0.47 + 83, y * 0.47 + 59) * 0.10;
+}
+
+function terrainBaseHeight(x: number, y: number): number {
+  return terrainHeight(x, y * GROUND_BASE_VERTICAL_SCALE);
 }
 
 function valueNoise(x: number, y: number): number {
