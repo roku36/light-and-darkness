@@ -64,9 +64,10 @@ async function showTitle(): Promise<void> {
   mountTitle(source);
 }
 
-async function beginCurrentLevel(): Promise<void> {
+async function beginLevel(index: number): Promise<void> {
   if (!titleVisible) return;
   titleVisible = false;
+  currentIndex = index;
   await startLevel(currentIndex);
   startLevelHotReload();
 }
@@ -96,6 +97,7 @@ async function mountLevel(index: number, level: LevelDefinition, source: string)
       onState: updateHud,
       onUndoPrompt: (visible: boolean) => setUndoPrompt(visible),
       onComplete: completeLevel,
+      onTitle: () => void showTitle(),
     });
   });
 }
@@ -104,7 +106,10 @@ function mountTitle(source: string): void {
   createPhaserGame((bootedGame) => {
     bootedGame.scene.add('title', TitleScene, true, {
       source,
-      onStart: () => void beginCurrentLevel(),
+      levels: levels.map((entry) => ({ id: entry.id, name: entry.name })),
+      completedLevels: progress.completed,
+      currentLevel: progress.currentLevel,
+      onStartLevel: (index: number) => void beginLevel(index),
     });
   });
 }

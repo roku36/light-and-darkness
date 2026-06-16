@@ -4,6 +4,7 @@ import { createLightMap, updateLightMap } from './visualLighting';
 import { ensureSpriteAnimations, preloadSpriteSheets, SPRITE_ANIMATIONS, SPRITE_TEXTURES } from './spriteSheets';
 
 const TILE = 48;
+const TITLE_SCALE = 2;
 const FLAME_FRAME_MS = 90;
 const LOGO_WIDTH = TILE * 5;
 const LOGO_HEIGHT = TILE;
@@ -15,7 +16,15 @@ const SHARED_LIGHT_TEXTURE_KEY = 'board-floor-luminance';
 
 interface TitleSceneData {
   source: string;
-  onStart: () => void;
+  levels: TitleLevelButton[];
+  completedLevels: string[];
+  currentLevel: string;
+  onStartLevel: (index: number) => void;
+}
+
+interface TitleLevelButton {
+  id: string;
+  name?: string;
 }
 
 interface TitleLayout {
@@ -40,7 +49,10 @@ export class TitleScene extends Phaser.Scene {
   private lightMap?: Phaser.GameObjects.Image;
   private lightAnimationStep = 0;
   private nextLightAnimationAt = 0;
-  private onStart!: () => void;
+  private levels: TitleLevelButton[] = [];
+  private completedLevels = new Set<string>();
+  private currentLevel = '';
+  private onStartLevel!: (index: number) => void;
   private keys!: Record<string, Phaser.Input.Keyboard.Key>;
   private started = false;
 
@@ -50,7 +62,10 @@ export class TitleScene extends Phaser.Scene {
 
   init(data: TitleSceneData): void {
     this.layout = parseTitleLayout(data.source);
-    this.onStart = data.onStart;
+    this.levels = data.levels;
+    this.completedLevels = new Set(data.completedLevels);
+    this.currentLevel = data.currentLevel;
+    this.onStartLevel = data.onStartLevel;
     this.started = false;
   }
 
@@ -66,14 +81,14 @@ export class TitleScene extends Phaser.Scene {
     this.board.setPostPipeline('OneBitPipeline');
     ensureSpriteAnimations(this);
     this.keys = this.input.keyboard!.addKeys('SPACE,ENTER') as Record<string, Phaser.Input.Keyboard.Key>;
-    this.input.on('pointerdown', () => this.startGame());
+    this.input.on('pointerdown', () => this.startCurrentLevel());
     this.scale.on('resize', this.renderTitle, this);
     this.renderTitle();
   }
 
   update(time: number): void {
     if (Phaser.Input.Keyboard.JustDown(this.keys.SPACE) || Phaser.Input.Keyboard.JustDown(this.keys.ENTER)) {
-      this.startGame();
+      this.startCurrentLevel();
       return;
     }
     if (time >= this.nextLightAnimationAt && this.lightMap?.active) {
@@ -96,7 +111,8 @@ export class TitleScene extends Phaser.Scene {
     this.renderLayout.lights.forEach((point) => this.drawLight(point, false));
     this.drawLogo(TITLE_LOGO_LIGHT, LIGHT_LOGO_ROW);
     this.drawLogo(TITLE_LOGO_DARK, DARK_LOGO_ROW);
-    this.board.setScale(1);
+    this.drawStageButtons();
+    this.board.setScale(TITLE_SCALE);
     this.board.setPosition(0, 0);
   }
 
@@ -121,11 +137,53 @@ export class TitleScene extends Phaser.Scene {
     this.board.add(light);
   }
 
-  private startGame(): void {
+  private drawStageButtons(): void {
+    const centerX = (this.renderLayout.sourceOrigin.x + this.renderLayout.sourceWidth / 2) * TILE;
+    const y = (this.renderLayout.sourceOrigin.y + this.layout.height + 0.72) * TILE;
+    const gap = TILE * 0.92;
+    const startX = centerX - ((this.levels.length - 1) * gap) / 2;
+    this.levels.forEach((_level, index) => {
+      const unlocked = this.isLevelUnlocked(index);
+      const x = startX + index * gap;
+      const button = this.add.container(x, y);
+      const box = this.add.rectangle(0, 0, 34, 22, unlocked ? 0xffffff : 0x222222)
+        .setStrokeStyle(1, 0xffffff);
+      const label = this.add.text(0, 0, String(index + 1).padStart(2, '0'), {
+        fontFamily: 'Arial Narrow, Arial, sans-serif',
+        fontSize: '12px',
+        fontStyle: '900',
+        color: unlocked ? '#000000' : '#ffffff',
+      }).setOrigin(0.5);
+      button.add([box, label]);
+      button.setSize(34, 22);
+      button.setInteractive(new Phaser.Geom.Rectangle(-17, -11, 34, 22), Phaser.Geom.Rectangle.Contains);
+      if (unlocked) {
+        button.on('pointerdown', (_pointer: Phaser.Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => {
+          event.stopPropagation();
+          this.startLevel(index);
+        });
+      }
+      this.board.add(button);
+    });
+  }
+
+  private isLevelUnlocked(index: number): boolean {
+    if (index === 0) return true;
+    const current = this.levels[index];
+    const previous = this.levels[index - 1];
+    return this.completedLevels.has(current.id) || this.completedLevels.has(previous.id);
+  }
+
+  private startCurrentLevel(): void {
+    const savedIndex = Math.max(0, this.levels.findIndex((level) => level.id === this.currentLevel));
+    const index = this.isLevelUnlocked(savedIndex) ? savedIndex : this.levels.findIndex((_level, levelIndex) => this.isLevelUnlocked(levelIndex));
+    if (index >= 0) this.startLevel(index);
+  }
+
+  private startLevel(index: number): void {
     if (this.started) return;
     this.started = true;
-    this.textures.remove(SHARED_LIGHT_TEXTURE_KEY);
-    this.onStart();
+    this.onStartLevel(index);
   }
 }
 
@@ -157,8 +215,8 @@ function parseTitleLayout(source: string): TitleLayout {
 }
 
 function createFullscreenLayout(source: TitleLayout, pixelWidth: number, pixelHeight: number): TitleRenderLayout {
-  const width = Math.max(source.width, Math.ceil(pixelWidth / TILE) + 1);
-  const height = Math.max(source.height, Math.ceil(pixelHeight / TILE) + 1);
+  const width = Math.max(source.width, Math.ceil(pixelWidth / TITLE_SCALE / TILE) + 1);
+  const height = Math.max(source.height, Math.ceil(pixelHeight / TITLE_SCALE / TILE) + 1);
   const sourceOrigin = {
     x: Math.floor((width - source.width) / 2),
     y: Math.floor((height - source.height) / 2),

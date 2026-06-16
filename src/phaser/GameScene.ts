@@ -19,6 +19,7 @@ interface SceneData {
   onState: (state: GameSession['state']) => void;
   onComplete: () => void;
   onUndoPrompt: (visible: boolean) => void;
+  onTitle: () => void;
 }
 
 export class GameScene extends Phaser.Scene {
@@ -27,6 +28,7 @@ export class GameScene extends Phaser.Scene {
   private onState!: SceneData['onState'];
   private onComplete!: SceneData['onComplete'];
   private onUndoPrompt!: SceneData['onUndoPrompt'];
+  private onTitle!: SceneData['onTitle'];
   private board!: Phaser.GameObjects.Container;
   private lightMap?: Phaser.GameObjects.Image;
   private lightAnimationStep = 0;
@@ -52,6 +54,7 @@ export class GameScene extends Phaser.Scene {
     this.onState = data.onState;
     this.onComplete = data.onComplete;
     this.onUndoPrompt = data.onUndoPrompt;
+    this.onTitle = data.onTitle;
   }
 
   preload(): void {
@@ -65,6 +68,7 @@ export class GameScene extends Phaser.Scene {
     ensureSpriteAnimations(this);
     this.cursors = this.input.keyboard!.createCursorKeys();
     this.keys = this.input.keyboard!.addKeys('W,A,S,D,SPACE,Z,R,T') as Record<string, Phaser.Input.Keyboard.Key>;
+    this.keys.ESC = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
     this.scale.on('resize', this.layoutBoard, this);
     this.renderBoard();
     this.layoutBoard();
@@ -72,6 +76,11 @@ export class GameScene extends Phaser.Scene {
   }
 
   update(time: number): void {
+    if (Phaser.Input.Keyboard.JustDown(this.keys.ESC)) {
+      this.clearFailure();
+      this.onTitle();
+      return;
+    }
     if (Phaser.Input.Keyboard.JustDown(this.keys.T)) {
       this.toggleOneBitFilter();
       return;
