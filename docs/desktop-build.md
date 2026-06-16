@@ -76,9 +76,9 @@ The workflow at `.github/workflows/desktop-build.yml` can be started manually fr
 
 When a `v*` tag is pushed, the same workflow also creates or updates the GitHub Release for that tag and attaches:
 
-- `光と影の宝-macos-app.zip`
+- `light-and-darkness-macos-app.zip`
 - `light-and-darkness.exe`
-- `*-setup.exe`
+- `light-and-darkness-setup.exe`
 
 Release command:
 

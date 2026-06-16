@@ -33,19 +33,19 @@ jobs:
         run: npm run desktop:build:mac
 
       - name: Archive .app
-        run: ditto -c -k --sequesterRsrc --keepParent "src-tauri/target/release/bundle/macos/光と影の宝.app" "光と影の宝-macos-app.zip"
+        run: ditto -c -k --sequesterRsrc --keepParent "src-tauri/target/release/bundle/macos/光と影の宝.app" "light-and-darkness-macos-app.zip"
 
       - uses: actions/upload-artifact@v4
         with:
           name: macos-app
-          path: 光と影の宝-macos-app.zip
+          path: light-and-darkness-macos-app.zip
 
       - name: Upload .app to GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           overwrite_files: true
-          files: 光と影の宝-macos-app.zip
+          files: light-and-darkness-macos-app.zip
 
   windows:
     name: Windows .exe
@@ -66,12 +66,19 @@ jobs:
       - name: Build installer .exe
         run: npm run desktop:build:windows
 
+      - name: Normalize Windows artifact names
+        shell: pwsh
+        run: |
+          Copy-Item "src-tauri/target/release/light-and-darkness.exe" "light-and-darkness.exe"
+          $installer = Get-ChildItem "src-tauri/target/release/bundle/nsis/*-setup.exe" | Select-Object -First 1
+          Copy-Item $installer.FullName "light-and-darkness-setup.exe"
+
       - uses: actions/upload-artifact@v4
         with:
           name: windows-exe
           path: |
-            src-tauri/target/release/light-and-darkness.exe
-            src-tauri/target/release/bundle/nsis/*-setup.exe
+            light-and-darkness.exe
+            light-and-darkness-setup.exe
 
       - name: Upload .exe to GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
@@ -79,5 +86,5 @@ jobs:
         with:
           overwrite_files: true
           files: |
-            src-tauri/target/release/light-and-darkness.exe
-            src-tauri/target/release/bundle/nsis/*-setup.exe
+            light-and-darkness.exe
+            light-and-darkness-setup.exe
