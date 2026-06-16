@@ -1,0 +1,36 @@
+[
+  {
+    "id": "first-switch",
+    "file": "01.txt",
+    "lightRadius": 4,
+    "nextLevel": "box-step",
+    "tutorial": "01: PUSH THE BOX, THEN SPACE, THEN DARK TO GEM."
+  },
+  {
+    "id": "box-step",
+    "file": "02.txt",
+    "lightRadius": 4,
+    "nextLevel": "lamp-push",
+    "tutorial": "02: PUSH THE BOX UP TWICE, THEN DARK TO GEM."
+  },
+  {
+    "id": "lamp-push",
+    "file": "03.txt",
+    "lightRadius": 4,
+    "nextLevel": "make-shadow",
+    "tutorial": "03: LIGHT CAN PUSH THE LIGHT SOURCE."
+  },
+  {
+    "id": "make-shadow",
+    "file": "04.txt",
+    "lightRadius": 5,
+    "nextLevel": "two-treasures",
+    "tutorial": "04: PUSH THE BOX TO KEEP DARK IN SHADOW."
+  },
+  {
+    "id": "two-treasures",
+    "file": "05.txt",
+    "lightRadius": 5,
+    "tutorial": "05: MOVE THE LAMP, PUSH THE BOX INTO THE LIGHT PATH."
+  }
+]

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#000000" />
+    <title>Light / Dark</title>
+  </head>
+  <body>
+    <div id="app">
+      <header class="topbar">
+        <h1>LIGHT / DARK</h1>
+        <div class="status" aria-live="polite">
+          <span id="stage-label">STAGE 01</span>
+          <span id="moves-label">MOVES 0</span>
+          <span id="actor-label" class="actor-label">LIGHT</span>
+        </div>
+      </header>
+      <main>
+        <div id="game" aria-label="Light and Darkness puzzle board"></div>
+        <div id="message" class="message" aria-live="assertive"></div>
+      </main>
+      <footer class="controls">
+        <div id="tutorial-label" class="tutorial-label"></div>
+        <div><kbd>ARROWS / WASD</kbd> MOVE</div>
+        <div><kbd>SPACE</kbd> SWITCH</div>
+        <div><kbd>Z</kbd> UNDO</div>
+        <div><kbd>R</kbd> RESTART</div>
+        <div><kbd>T</kbd> DITHER</div>
+        <label>STAGE <select id="stage-select" aria-label="Stage select"></select></label>
+      </footer>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
