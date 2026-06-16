@@ -7,9 +7,10 @@ import { createLightMap, updateLightMap } from './visualLighting';
 
 const TILE = 48;
 const MOVE_MS = 160;
+const UNDO_MOVE_MS = 60;
 const FLAME_FRAME_MS = 90;
 const UNDO_FLASH_MS = 34;
-const UNDO_FLASH_ALPHA = 0.14;
+const UNDO_FLASH_ALPHA = 0.35;
 
 type FacingDirection = 'left' | 'right';
 
@@ -102,8 +103,7 @@ export class GameScene extends Phaser.Scene {
     if (Phaser.Input.Keyboard.JustDown(this.keys.Z)) {
       const from = cloneState(this.session.state);
       if (this.session.undo()) {
-        this.flashUndoInput();
-        this.animateStateTransition(from, this.session.state);
+        this.animateUndoTransition(from, this.session.state);
       }
       return;
     }
@@ -175,18 +175,24 @@ export class GameScene extends Phaser.Scene {
     this.drawUndoFlash();
   }
 
+  private animateUndoTransition(from: GameState, to: GameState): void {
+    this.flashUndoInput();
+    this.animateStateTransition(from, to, undefined, undefined, UNDO_MOVE_MS);
+  }
+
   private animateStateTransition(
     from: GameState,
     to: GameState,
     hiddenActor?: ActorKind,
     onComplete?: () => void,
+    duration = MOVE_MS,
   ): void {
     this.inputLocked = true;
     const progress = { value: 0 };
     this.tweens.add({
       targets: progress,
       value: 1,
-      duration: MOVE_MS,
+      duration,
       ease: 'Sine.easeInOut',
       onUpdate: () => {
         this.renderBoard(interpolateState(from, to, progress.value), hiddenActor);
@@ -212,10 +218,7 @@ export class GameScene extends Phaser.Scene {
   private undoFailedMove(): void {
     const from = this.failedMove?.state;
     this.clearFailure();
-    if (from) {
-      this.flashUndoInput();
-      this.animateStateTransition(from, this.session.state);
-    }
+    if (from) this.animateUndoTransition(from, this.session.state);
   }
 
   private clearFailure(): void {

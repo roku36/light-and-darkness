@@ -19,6 +19,12 @@ export async function loadLevelIndexSource(cacheKey?: string | number): Promise<
   return response.text();
 }
 
+export async function loadTitleSource(cacheKey?: string | number): Promise<string> {
+  const response = await fetch(withCacheKey('./levels/title.txt', cacheKey), { cache: 'no-store' });
+  if (!response.ok) throw new Error(`Could not load title.txt (${response.status}).`);
+  return response.text();
+}
+
 export function parseLevelIndex(source: string): LevelIndexEntry[] {
   return JSON.parse(source) as LevelIndexEntry[];
 }

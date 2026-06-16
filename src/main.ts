@@ -3,6 +3,7 @@ import './style.css';
 import {
   loadLevelIndexSource,
   loadLevelSource,
+  loadTitleSource,
   parseLevelIndex,
   type LevelIndexEntry,
 } from './game/levelLoader';
@@ -11,6 +12,7 @@ import { loadProgress, saveProgress, type ProgressData } from './game/progress';
 import type { GameState, LevelDefinition } from './game/types';
 import { GameScene } from './phaser/GameScene';
 import { OneBitPipeline } from './phaser/OneBitPipeline';
+import { TitleScene } from './phaser/TitleScene';
 
 const stageLabel = requiredElement<HTMLSpanElement>('stage-label');
 const movesLabel = requiredElement<HTMLSpanElement>('moves-label');
@@ -28,6 +30,7 @@ let levelIndexSource = '';
 let currentLevelSource = '';
 let hotReloadTimer = 0;
 let hotReloading = false;
+let titleVisible = false;
 
 const HOT_RELOAD_INTERVAL_MS = 700;
 
@@ -39,11 +42,32 @@ async function start(): Promise<void> {
     progress = loadProgress(levels[0].id);
     currentIndex = Math.max(0, levels.findIndex((entry) => entry.id === progress.currentLevel));
     buildStageSelect();
-    await startLevel(currentIndex);
-    startLevelHotReload();
+    await showTitle();
   } catch (error) {
     showMessage(error instanceof Error ? error.message : 'Unknown startup error.', true);
   }
+}
+
+async function showTitle(): Promise<void> {
+  window.clearInterval(hotReloadTimer);
+  setUndoPrompt(false);
+  titleVisible = true;
+  currentLevelSource = '';
+  stageLabel.textContent = 'TITLE';
+  movesLabel.textContent = '';
+  actorLabel.textContent = '';
+  delete actorLabel.dataset.actor;
+  tutorialLabel.textContent = 'SPACE / ENTER / CLICK START';
+  stageSelect.value = levels[currentIndex]?.id ?? '';
+  const source = await loadTitleSource();
+  mountTitle(source);
+}
+
+async function beginCurrentLevel(): Promise<void> {
+  if (!titleVisible) return;
+  titleVisible = false;
+  await startLevel(currentIndex);
+  startLevelHotReload();
 }
 
 async function startLevel(index: number): Promise<void> {
@@ -65,6 +89,26 @@ async function mountLevel(index: number, level: LevelDefinition, source: string)
   stageLabel.textContent = `STAGE ${String(index + 1).padStart(2, '0')} · ${level.name}`;
   tutorialLabel.textContent = entry.tutorial ?? '';
 
+  createPhaserGame((bootedGame) => {
+    bootedGame.scene.add('game', GameScene, true, {
+      level,
+      onState: updateHud,
+      onUndoPrompt: (visible: boolean) => setUndoPrompt(visible),
+      onComplete: completeLevel,
+    });
+  });
+}
+
+function mountTitle(source: string): void {
+  createPhaserGame((bootedGame) => {
+    bootedGame.scene.add('title', TitleScene, true, {
+      source,
+      onStart: () => void beginCurrentLevel(),
+    });
+  });
+}
+
+function createPhaserGame(startScene: (bootedGame: Phaser.Game) => void): void {
   if (game) game.destroy(true);
   game = new Phaser.Game({
     type: Phaser.WEBGL,
@@ -79,12 +123,7 @@ async function mountLevel(index: number, level: LevelDefinition, source: string)
         if (bootedGame.renderer instanceof Phaser.Renderer.WebGL.WebGLRenderer) {
           bootedGame.renderer.pipelines.addPostPipeline('OneBitPipeline', OneBitPipeline);
         }
-        bootedGame.scene.add('game', GameScene, true, {
-          level,
-          onState: updateHud,
-          onUndoPrompt: (visible: boolean) => setUndoPrompt(visible),
-          onComplete: completeLevel,
-        });
+        startScene(bootedGame);
       },
     },
   });
@@ -174,7 +213,11 @@ function buildStageSelect(): void {
 
 stageSelect.addEventListener('change', () => {
   const index = levels.findIndex((entry) => entry.id === stageSelect.value);
-  if (index >= 0) void startLevel(index);
+  if (index >= 0) {
+    titleVisible = false;
+    void startLevel(index);
+    startLevelHotReload();
+  }
 });
 
 function showMessage(text: string, persistent = false): void {
