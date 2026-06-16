@@ -20,9 +20,24 @@ body {
   background: #000;
 }
 
-.topbar,
 .controls {
   display: none;
+}
+
+.topbar {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  right: 16px;
+  z-index: 3;
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  pointer-events: none;
 }
 
 main {
@@ -61,6 +76,7 @@ h1 { margin: 0; font-size: clamp(18px, 2.4vw, 30px); letter-spacing: -0.04em; tr
   pointer-events: none;
   transition: opacity 80ms linear, transform 80ms steps(2);
   text-align: center;
+  white-space: pre-line;
 }
 .message.visible { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 .message.undo-prompt {

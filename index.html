@@ -9,12 +9,10 @@
   <body>
     <div id="app">
       <header class="topbar">
-        <h1>LIGHT / DARK</h1>
-        <div class="status" aria-live="polite">
-          <span id="stage-label">STAGE 01</span>
-          <span id="moves-label">MOVES 0</span>
-          <span id="actor-label" class="actor-label">LIGHT</span>
-        </div>
+        <span id="stage-label">STAGE 01</span>
+        <span id="escape-label">Esc: タイトルに戻る</span>
+        <span id="moves-label" hidden>MOVES 0</span>
+        <span id="actor-label" class="actor-label" hidden>LIGHT</span>
       </header>
       <main>
         <div id="game" aria-label="Light and Darkness puzzle board"></div>

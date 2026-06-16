@@ -15,6 +15,7 @@ import { OneBitPipeline } from './phaser/OneBitPipeline';
 import { TitleScene } from './phaser/TitleScene';
 
 const stageLabel = requiredElement<HTMLSpanElement>('stage-label');
+const escapeLabel = requiredElement<HTMLSpanElement>('escape-label');
 const movesLabel = requiredElement<HTMLSpanElement>('moves-label');
 const actorLabel = requiredElement<HTMLSpanElement>('actor-label');
 const stageSelect = requiredElement<HTMLSelectElement>('stage-select');
@@ -32,6 +33,7 @@ let currentLevelSource = '';
 let hotReloadTimer = 0;
 let hotReloading = false;
 let titleVisible = false;
+let pendingNextIndex: number | null = null;
 
 const HOT_RELOAD_INTERVAL_MS = 700;
 
@@ -52,9 +54,11 @@ async function start(): Promise<void> {
 async function showTitle(): Promise<void> {
   window.clearInterval(hotReloadTimer);
   setUndoPrompt(false);
+  pendingNextIndex = null;
   titleVisible = true;
   currentLevelSource = '';
-  stageLabel.textContent = 'TITLE';
+  stageLabel.textContent = '';
+  escapeLabel.textContent = '';
   movesLabel.textContent = '';
   actorLabel.textContent = '';
   delete actorLabel.dataset.actor;
@@ -80,6 +84,7 @@ async function startLevel(index: number): Promise<void> {
 
 async function mountLevel(index: number, level: LevelDefinition, source: string): Promise<void> {
   setUndoPrompt(false);
+  pendingNextIndex = null;
   currentIndex = index;
   const entry = levels[index];
   levels[index] = { ...entry, name: level.name };
@@ -88,7 +93,8 @@ async function mountLevel(index: number, level: LevelDefinition, source: string)
   saveProgress(progress);
   buildStageSelect();
   stageSelect.value = entry.id;
-  stageLabel.textContent = `STAGE ${String(index + 1).padStart(2, '0')} · ${level.name}`;
+  stageLabel.textContent = level.name;
+  escapeLabel.textContent = 'Esc: タイトルに戻る';
   tutorialLabel.textContent = entry.tutorial ?? '';
 
   createPhaserGame((bootedGame) => {
@@ -209,12 +215,14 @@ function completeLevel(): void {
   if (!progress.completed.includes(id)) progress.completed.push(id);
   saveProgress(progress);
   buildStageSelect();
-  showMessage('BOTH TREASURES RESONATE');
   const next = levels[currentIndex].nextLevel;
   if (next) {
     const nextIndex = levels.findIndex((entry) => entry.id === next);
-    window.setTimeout(() => void startLevel(nextIndex), 950);
+    pendingNextIndex = nextIndex >= 0 ? nextIndex : null;
+  } else {
+    pendingNextIndex = null;
   }
+  showMessage('クリア！\nEnterで次のステージへ', true);
 }
 
 function buildStageSelect(): void {
@@ -236,6 +244,14 @@ stageSelect.addEventListener('change', () => {
   }
 });
 
+window.addEventListener('keydown', (event) => {
+  if (event.key !== 'Enter' || pendingNextIndex === null) return;
+  const nextIndex = pendingNextIndex;
+  pendingNextIndex = null;
+  message.classList.remove('visible');
+  void startLevel(nextIndex);
+});
+
 function showMessage(text: string, persistent = false): void {
   window.clearTimeout(messageTimer);
   message.classList.remove('undo-prompt');
@@ -251,7 +267,7 @@ function setUndoPrompt(visible: boolean): void {
     message.textContent = '';
     return;
   }
-  message.textContent = 'Z  UNDO';
+  message.textContent = 'Z: 一手戻る\nR: ステージを始めから';
   message.classList.add('visible', 'undo-prompt');
 }
 
