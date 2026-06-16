@@ -4,16 +4,15 @@ const fragmentShader = `
 precision mediump float;
 uniform sampler2D uMainSampler;
 uniform vec2 resolution;
+uniform float ditherScale;
 varying vec2 outTexCoord;
 
-const float BLOCK_SIZE = 1.0;
-
 vec2 blockCoord(vec2 uv) {
-  return floor(uv * resolution / BLOCK_SIZE);
+  return floor(uv * resolution / ditherScale);
 }
 
 vec2 blockCenterUv(vec2 block) {
-  return ((block * BLOCK_SIZE) + vec2(0.5 * BLOCK_SIZE)) / resolution;
+  return ((block * ditherScale) + vec2(0.5 * ditherScale)) / resolution;
 }
 
 float fixedDither(vec2 block) {
@@ -36,13 +35,17 @@ void main() {
   gl_FragColor = vec4(vec3(bit), color.a);
 }`;
 
+type ScaledGameObject = Phaser.GameObjects.GameObject & { scaleX?: number };
+
 export class OneBitPipeline extends Phaser.Renderer.WebGL.Pipelines.PostFXPipeline {
   constructor(game: Phaser.Game) {
     super({ game, name: 'OneBitPipeline', fragShader: fragmentShader });
   }
 
   onDraw(target: Phaser.Renderer.WebGL.RenderTarget): void {
+    const sourceScale = Math.max(1, Math.round((this.gameObject as ScaledGameObject | undefined)?.scaleX ?? 1));
     this.set2f('resolution', target.width, target.height);
+    this.set1f('ditherScale', sourceScale);
     this.bindAndDraw(target);
   }
 }
