@@ -74,7 +74,20 @@ The workflow at `.github/workflows/desktop-build.yml` can be started manually fr
 - macOS: `光と影の宝.app`, uploaded as a zip artifact
 - Windows: `light-and-darkness.exe` and the NSIS `*-setup.exe`, uploaded as artifacts
 
-This is the closest Tauri equivalent to a one-shot multi-platform export: each platform is built on its native runner.
+When a `v*` tag is pushed, the same workflow also creates or updates the GitHub Release for that tag and attaches:
+
+- `光と影の宝-macos-app.zip`
+- `light-and-darkness.exe`
+- `*-setup.exe`
+
+Release command:
+
+```sh
+git tag v0.1.0
+git push origin main v0.1.0
+```
+
+This is the closest Tauri equivalent to a one-shot multi-platform export: each platform is built on its native runner, then the artifacts are collected on the GitHub Release.
 
 ## Cross-Building Windows From macOS
 
