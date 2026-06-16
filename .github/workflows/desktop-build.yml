@@ -9,6 +9,9 @@ on:
 permissions:
   contents: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   macos:
     name: macOS .app
@@ -41,6 +44,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
+          overwrite_files: true
           files: 光と影の宝-macos-app.zip
 
   windows:
@@ -73,6 +77,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
+          overwrite_files: true
           files: |
             src-tauri/target/release/light-and-darkness.exe
             src-tauri/target/release/bundle/nsis/*-setup.exe
