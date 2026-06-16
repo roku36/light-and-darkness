@@ -11,6 +11,7 @@ const DIRECT_LIGHT_BASE_LUMINANCE = 0.52;
 const DIRECT_LIGHT_RELIEF_LUMINANCE = 0.58;
 const DIRECT_LIGHT_HORIZONTAL_SCALE = 0.62;
 const DIRECT_LIGHT_FALLOFF = 1.04;
+const DIRECT_LIGHT_FALLOFF_DISTANCE_TILES = 18;
 
 export interface NormalField {
   x: Float32Array;
@@ -52,18 +53,18 @@ function renderLightTexture(
 ): void {
   const width = level.width * tileSize;
   const height = level.height * tileSize;
-  const existing = scene.textures.get(FLOOR_TEXTURE_KEY);
   const texture = scene.textures.exists(FLOOR_TEXTURE_KEY)
-    ? existing as Phaser.Textures.CanvasTexture
+    ? scene.textures.get(FLOOR_TEXTURE_KEY) as Phaser.Textures.CanvasTexture
     : scene.textures.createCanvas(FLOOR_TEXTURE_KEY, width, height);
   if (!texture) throw new Error('Could not create the visual light map.');
+  if (texture.width !== width || texture.height !== height) texture.setSize(width, height);
 
   const context = texture.getContext();
   const pixels = context.createImageData(width, height);
   const floorLuminance = new Float32Array(width * height);
   const normals = getNormalField(width, height);
   const blockers = visualLightBlockers(level, state);
-  const boardDiagonal = Math.hypot(width, height);
+  const falloffDistance = DIRECT_LIGHT_FALLOFF_DISTANCE_TILES * tileSize;
   const horizontalOffset = FLAME_HORIZONTAL_OFFSETS[animationStep % FLAME_HORIZONTAL_OFFSETS.length] * tileSize;
 
   for (let index = 0; index < floorLuminance.length; index += 1) {
@@ -81,7 +82,7 @@ function renderLightTexture(
       for (let x = 0; x < width; x += 1) {
         const index = y * width + x;
         if (visibility[index] < 128) continue;
-        const directLight = directLightLuminance(normals, index, directLightPosition, { x: x + 0.5, y: y + 0.5 }, boardDiagonal);
+        const directLight = directLightLuminance(normals, index, directLightPosition, { x: x + 0.5, y: y + 0.5 }, falloffDistance);
         floorLuminance[index] = Math.max(floorLuminance[index], directLight);
       }
     }
@@ -114,7 +115,7 @@ function directLightLuminance(
   index: number,
   source: PixelPoint,
   pixel: PixelPoint,
-  boardDiagonal: number,
+  falloffDistance: number,
 ): number {
   const dx = source.x - pixel.x;
   const dy = source.y - pixel.y;
@@ -123,8 +124,8 @@ function directLightLuminance(
   const lightY = horizontalLength > 0 ? (dy / horizontalLength) * DIRECT_LIGHT_HORIZONTAL_SCALE : 0;
   const lightZ = Math.sqrt(1 - DIRECT_LIGHT_HORIZONTAL_SCALE * DIRECT_LIGHT_HORIZONTAL_SCALE);
   const diffuse = Math.max(0, normals.x[index] * lightX + normals.y[index] * lightY + normals.z[index] * lightZ);
-  const distanceRatio = Math.min(1, horizontalLength / boardDiagonal);
-  const subtleFalloff = 1 - distanceRatio * DIRECT_LIGHT_FALLOFF;
+  const distanceRatio = Math.min(1, horizontalLength / falloffDistance);
+  const subtleFalloff = Math.max(0, 1 - distanceRatio * DIRECT_LIGHT_FALLOFF);
   return (DIRECT_LIGHT_BASE_LUMINANCE + diffuse * DIRECT_LIGHT_RELIEF_LUMINANCE) * subtleFalloff;
 }
 

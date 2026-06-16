@@ -4,10 +4,13 @@ import { createLightMap, updateLightMap } from './visualLighting';
 import { ensureSpriteAnimations, preloadSpriteSheets, SPRITE_ANIMATIONS, SPRITE_TEXTURES } from './spriteSheets';
 
 const TILE = 48;
-const TITLE_SCALE = 2;
+const TITLE_SCALE = 3;
+const TITLE_LAYOUT_WIDTH = 17;
+const TITLE_LAYOUT_HEIGHT = 11;
 const FLAME_FRAME_MS = 90;
 const LOGO_WIDTH = TILE * 5;
 const LOGO_HEIGHT = TILE;
+const BUTTON_BOTTOM_MARGIN = 118;
 const LIGHT_LOGO_ROW = 2;
 const DARK_LOGO_ROW = 4;
 const TITLE_LOGO_LIGHT = 'title-logo-light';
@@ -148,14 +151,14 @@ export class TitleScene extends Phaser.Scene {
     this.renderLayout.lights.forEach((point) => this.drawLight(point, false));
     this.drawLogo(TITLE_LOGO_LIGHT, LIGHT_LOGO_ROW);
     this.drawLogo(TITLE_LOGO_DARK, DARK_LOGO_ROW);
-    this.drawStageButtons();
     this.board.setScale(TITLE_SCALE);
     const boardWidth = this.renderLayout.width * TILE * TITLE_SCALE;
     const boardHeight = this.renderLayout.height * TILE * TITLE_SCALE;
     this.board.setPosition(
-      Math.floor((this.scale.width - boardWidth) / 2),
-      Math.floor((this.scale.height - boardHeight) / 2),
+      alignToScale((this.scale.width - boardWidth) / 2, TITLE_SCALE),
+      alignToScale((this.scale.height - boardHeight) / 2, TITLE_SCALE),
     );
+    this.drawStageButtons();
   }
 
   private drawLogo(textureKey: string, row: number): void {
@@ -181,7 +184,7 @@ export class TitleScene extends Phaser.Scene {
 
   private drawStageButtons(): void {
     const centerX = (this.renderLayout.sourceOrigin.x + this.renderLayout.sourceWidth / 2) * TILE;
-    const y = (this.renderLayout.sourceOrigin.y + this.layout.height + 0.72) * TILE;
+    const y = (this.scale.height - BUTTON_BOTTOM_MARGIN - this.board.y) / TITLE_SCALE;
     const gap = TILE * 0.92;
     const startX = centerX - ((this.levels.length - 1) * gap) / 2;
     this.levels.forEach((level, index) => {
@@ -289,8 +292,8 @@ function parseTitleLayout(source: string): TitleLayout {
 }
 
 function createFullscreenLayout(source: TitleLayout, pixelWidth: number, pixelHeight: number): TitleRenderLayout {
-  const width = Math.max(source.width, Math.ceil(pixelWidth / TITLE_SCALE / TILE) + 1);
-  const height = Math.max(source.height, Math.ceil(pixelHeight / TITLE_SCALE / TILE) + 1);
+  const width = Math.max(source.width, TITLE_LAYOUT_WIDTH, Math.ceil(pixelWidth / TITLE_SCALE / TILE) + 1);
+  const height = Math.max(source.height, TITLE_LAYOUT_HEIGHT, Math.ceil(pixelHeight / TITLE_SCALE / TILE) + 1);
   const sourceOrigin = {
     x: Math.floor((width - source.width) / 2),
     y: Math.floor((height - source.height) / 2),
@@ -308,6 +311,10 @@ function createFullscreenLayout(source: TitleLayout, pixelWidth: number, pixelHe
 
 function offsetPoints(points: Point[], offset: Point): Point[] {
   return points.map((point) => ({ x: point.x + offset.x, y: point.y + offset.y }));
+}
+
+function alignToScale(value: number, scale: number): number {
+  return Math.round(value / scale) * scale;
 }
 
 function titleLevelDefinition(layout: TitleRenderLayout): LevelDefinition {

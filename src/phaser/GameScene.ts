@@ -338,10 +338,14 @@ export class GameScene extends Phaser.Scene {
     const scale = Math.min(integerScale, 2);
     this.board.setScale(scale);
     this.board.setPosition(
-      Math.floor((this.scale.width - boardWidth * scale) / 2),
-      Math.floor((this.scale.height - boardHeight * scale) / 2),
+      alignToScale((this.scale.width - boardWidth * scale) / 2, scale),
+      alignToScale((this.scale.height - boardHeight * scale) / 2, scale),
     );
   }
+}
+
+function alignToScale(value: number, scale: number): number {
+  return Math.round(value / scale) * scale;
 }
 
 function interpolateState(from: GameState, to: GameState, amount: number): GameState {
