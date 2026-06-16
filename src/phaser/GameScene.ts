@@ -2,7 +2,16 @@ import Phaser from 'phaser';
 import { cloneState, GameSession } from '../game/engine';
 import type { ActorKind, Direction, GameState, LevelDefinition, Point } from '../game/types';
 import { FLAME_HORIZONTAL_OFFSETS } from './flameAnimation';
-import { actorAnimationKey, actorTextureKey, ensureSpriteAnimations, preloadSpriteSheets, SPRITE_ANIMATIONS, SPRITE_TEXTURES } from './spriteSheets';
+import {
+  actorAnimationKey,
+  actorTextureKey,
+  ensureSpriteAnimations,
+  preloadSpriteSheets,
+  SPRITE_ANIMATIONS,
+  SPRITE_TEXTURES,
+  treasureAnimationKey,
+  treasureTextureKey,
+} from './spriteSheets';
 import { createLightMap, updateLightMap } from './visualLighting';
 
 const TILE = 48;
@@ -10,7 +19,7 @@ const MOVE_MS = 160;
 const UNDO_MOVE_MS = 60;
 const FLAME_FRAME_MS = 90;
 const UNDO_FLASH_MS = 34;
-const UNDO_FLASH_ALPHA = 0.35;
+const UNDO_FLASH_ALPHA = 0.05;
 
 type FacingDirection = 'left' | 'right';
 
@@ -285,12 +294,6 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private cellGraphics(point: Point): Phaser.GameObjects.Graphics {
-    const graphics = this.add.graphics({ x: point.x * TILE, y: point.y * TILE });
-    this.board.add(graphics);
-    return graphics;
-  }
-
   private drawWall(point: Point): void {
     this.drawStaticSprite(point, SPRITE_TEXTURES.wall);
   }
@@ -313,12 +316,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   private drawGoal(point: Point, kind: ActorKind): void {
-    const g = this.cellGraphics(point);
-    g.lineStyle(2, kind === 'light' ? 0x000000 : 0xffffff).strokeCircle(TILE / 2, TILE / 2, 17);
-    g.lineStyle(2, kind === 'light' ? 0x000000 : 0xffffff).strokeRect(16, 16, 16, 16);
-    if (kind === 'dark') {
-      for (let y = 18; y <= 30; y += 4) g.fillStyle(0xffffff).fillRect(18, y, 12, 1);
-    }
+    const sprite = this.add.sprite((point.x + 0.5) * TILE, (point.y + 0.5) * TILE, treasureTextureKey(kind), 0);
+    sprite.play(treasureAnimationKey(kind));
+    this.board.add(sprite);
   }
 
   private drawActor(point: Point, kind: ActorKind): void {
