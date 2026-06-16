@@ -20,6 +20,7 @@ const actorLabel = requiredElement<HTMLSpanElement>('actor-label');
 const stageSelect = requiredElement<HTMLSelectElement>('stage-select');
 const tutorialLabel = requiredElement<HTMLDivElement>('tutorial-label');
 const message = requiredElement<HTMLDivElement>('message');
+const gameRoot = requiredElement<HTMLDivElement>('game');
 
 let game: Phaser.Game | undefined;
 let levels: LevelIndexEntry[] = [];
@@ -110,6 +111,7 @@ function mountTitle(source: string): void {
 
 function createPhaserGame(startScene: (bootedGame: Phaser.Game) => void): void {
   if (game) game.destroy(true);
+  gameRoot.replaceChildren();
   game = new Phaser.Game({
     type: Phaser.WEBGL,
     parent: 'game',

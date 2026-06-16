@@ -15,31 +15,21 @@ body {
 }
 
 #app {
-  display: grid;
-  grid-template-rows: 64px minmax(0, 1fr) 82px;
-  padding: 0 22px;
+  display: block;
+  padding: 0;
   background: #000;
 }
 
-.topbar, .controls {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 22px;
-  border-color: #fff;
-  letter-spacing: 0.12em;
-  font-size: 12px;
-  font-weight: 800;
+.topbar,
+.controls {
+  display: none;
 }
 
-.topbar { border-bottom: var(--line); }
-.controls {
-  border-top: var(--line);
-  flex-wrap: wrap;
-  justify-content: center;
-  align-content: center;
-  gap: 6px 22px;
-  padding: 6px 0;
+main {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
 }
 
 h1 { margin: 0; font-size: clamp(18px, 2.4vw, 30px); letter-spacing: -0.04em; transform: scaleX(0.84); transform-origin: left; }
@@ -53,7 +43,6 @@ h1 { margin: 0; font-size: clamp(18px, 2.4vw, 30px); letter-spacing: -0.04em; tr
   text-align: center;
 }
 
-main { position: relative; min-height: 0; }
 #game { position: absolute; inset: 0; }
 #game canvas { display: block; image-rendering: pixelated; }
 
@@ -93,14 +82,6 @@ kbd, select {
   letter-spacing: 0.08em;
 }
 select { cursor: pointer; }
-
-@media (max-width: 760px) {
-  #app { grid-template-rows: 54px minmax(0, 1fr) 104px; padding: 0 10px; }
-  .topbar { gap: 8px; }
-  .status { gap: 8px; font-size: 9px; }
-  .status span:first-child { max-width: 92px; overflow: hidden; white-space: nowrap; }
-  .controls { flex-wrap: wrap; justify-content: center; gap: 7px 12px; padding: 7px 0; font-size: 9px; }
-}
 
 @media (prefers-reduced-motion: reduce) {
   .message { transition: none; }

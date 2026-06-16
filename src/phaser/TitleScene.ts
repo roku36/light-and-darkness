@@ -1,15 +1,17 @@
 import Phaser from 'phaser';
 import type { GameState, LevelDefinition, Point } from '../game/types';
-import { createLightMap } from './visualLighting';
-import { preloadSpriteSheets, SPRITE_TEXTURES } from './spriteSheets';
+import { createLightMap, updateLightMap } from './visualLighting';
+import { ensureSpriteAnimations, preloadSpriteSheets, SPRITE_ANIMATIONS, SPRITE_TEXTURES } from './spriteSheets';
 
 const TILE = 48;
+const FLAME_FRAME_MS = 90;
 const LOGO_WIDTH = TILE * 5;
 const LOGO_HEIGHT = TILE;
 const LIGHT_LOGO_ROW = 2;
 const DARK_LOGO_ROW = 4;
 const TITLE_LOGO_LIGHT = 'title-logo-light';
 const TITLE_LOGO_DARK = 'title-logo-dark';
+const SHARED_LIGHT_TEXTURE_KEY = 'board-floor-luminance';
 
 interface TitleSceneData {
   source: string;
@@ -24,9 +26,20 @@ interface TitleLayout {
   fixedLights: Point[];
 }
 
+interface TitleRenderLayout extends TitleLayout {
+  sourceOrigin: Point;
+  sourceWidth: number;
+}
+
 export class TitleScene extends Phaser.Scene {
   private board!: Phaser.GameObjects.Container;
   private layout!: TitleLayout;
+  private renderLayout!: TitleRenderLayout;
+  private titleLevel!: LevelDefinition;
+  private titleState!: GameState;
+  private lightMap?: Phaser.GameObjects.Image;
+  private lightAnimationStep = 0;
+  private nextLightAnimationAt = 0;
   private onStart!: () => void;
   private keys!: Record<string, Phaser.Input.Keyboard.Key>;
   private started = false;
@@ -51,31 +64,46 @@ export class TitleScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#000000');
     this.board = this.add.container(0, 0);
     this.board.setPostPipeline('OneBitPipeline');
+    ensureSpriteAnimations(this);
     this.keys = this.input.keyboard!.addKeys('SPACE,ENTER') as Record<string, Phaser.Input.Keyboard.Key>;
     this.input.on('pointerdown', () => this.startGame());
-    this.scale.on('resize', this.layoutBoard, this);
+    this.scale.on('resize', this.renderTitle, this);
     this.renderTitle();
-    this.layoutBoard();
   }
 
-  update(): void {
+  update(time: number): void {
     if (Phaser.Input.Keyboard.JustDown(this.keys.SPACE) || Phaser.Input.Keyboard.JustDown(this.keys.ENTER)) {
       this.startGame();
+      return;
+    }
+    if (time >= this.nextLightAnimationAt && this.lightMap?.active) {
+      this.nextLightAnimationAt = time + FLAME_FRAME_MS;
+      this.lightAnimationStep += 1;
+      updateLightMap(this, this.lightMap, this.titleLevel, this.titleState, TILE, this.lightAnimationStep);
     }
   }
 
   private renderTitle(): void {
     this.board.removeAll(true);
-    const level = titleLevelDefinition(this.layout);
-    const state = titleGameState(level);
-    this.board.add(createLightMap(this, level, state, TILE));
-    this.layout.walls.forEach((point) => this.drawWall(point));
+    this.textures.remove(SHARED_LIGHT_TEXTURE_KEY);
+    this.renderLayout = createFullscreenLayout(this.layout, this.scale.width, this.scale.height);
+    this.titleLevel = titleLevelDefinition(this.renderLayout);
+    this.titleState = titleGameState(this.titleLevel);
+    this.lightMap = createLightMap(this, this.titleLevel, this.titleState, TILE, this.lightAnimationStep);
+    this.board.add(this.lightMap);
+    this.renderLayout.walls.forEach((point) => this.drawWall(point));
+    this.renderLayout.fixedLights.forEach((point) => this.drawLight(point, true));
+    this.renderLayout.lights.forEach((point) => this.drawLight(point, false));
     this.drawLogo(TITLE_LOGO_LIGHT, LIGHT_LOGO_ROW);
     this.drawLogo(TITLE_LOGO_DARK, DARK_LOGO_ROW);
+    this.board.setScale(1);
+    this.board.setPosition(0, 0);
   }
 
   private drawLogo(textureKey: string, row: number): void {
-    const logo = this.add.image((this.layout.width * TILE) / 2, (row + 0.5) * TILE, textureKey)
+    const logoX = (this.renderLayout.sourceOrigin.x + this.renderLayout.sourceWidth / 2) * TILE;
+    const logoY = (this.renderLayout.sourceOrigin.y + row + 0.5) * TILE;
+    const logo = this.add.image(logoX, logoY, textureKey)
       .setDisplaySize(LOGO_WIDTH, LOGO_HEIGHT);
     this.board.add(logo);
   }
@@ -85,23 +113,18 @@ export class TitleScene extends Phaser.Scene {
     this.board.add(wall);
   }
 
-  private layoutBoard(): void {
-    const availableWidth = this.scale.width - 32;
-    const availableHeight = this.scale.height - 32;
-    const boardWidth = this.layout.width * TILE;
-    const boardHeight = this.layout.height * TILE;
-    const integerScale = Math.max(1, Math.floor(Math.min(availableWidth / boardWidth, availableHeight / boardHeight)));
-    const scale = Math.min(integerScale, 2);
-    this.board.setScale(scale);
-    this.board.setPosition(
-      Math.floor((this.scale.width - boardWidth * scale) / 2),
-      Math.floor((this.scale.height - boardHeight * scale) / 2),
-    );
+  private drawLight(point: Point, fixed: boolean): void {
+    const textureKey = fixed ? SPRITE_TEXTURES.fixedLightSource : SPRITE_TEXTURES.lightSource;
+    const animationKey = fixed ? SPRITE_ANIMATIONS.fixedLightSourceIdle : SPRITE_ANIMATIONS.lightSourceIdle;
+    const light = this.add.sprite((point.x + 0.5) * TILE, (point.y + 0.5) * TILE, textureKey, 0);
+    light.play(animationKey);
+    this.board.add(light);
   }
 
   private startGame(): void {
     if (this.started) return;
     this.started = true;
+    this.textures.remove(SHARED_LIGHT_TEXTURE_KEY);
     this.onStart();
   }
 }
@@ -133,7 +156,29 @@ function parseTitleLayout(source: string): TitleLayout {
   return { width, height: rows.length, walls, lights, fixedLights };
 }
 
-function titleLevelDefinition(layout: TitleLayout): LevelDefinition {
+function createFullscreenLayout(source: TitleLayout, pixelWidth: number, pixelHeight: number): TitleRenderLayout {
+  const width = Math.max(source.width, Math.ceil(pixelWidth / TILE) + 1);
+  const height = Math.max(source.height, Math.ceil(pixelHeight / TILE) + 1);
+  const sourceOrigin = {
+    x: Math.floor((width - source.width) / 2),
+    y: Math.floor((height - source.height) / 2),
+  };
+  return {
+    width,
+    height,
+    sourceOrigin,
+    sourceWidth: source.width,
+    walls: offsetPoints(source.walls, sourceOrigin),
+    lights: offsetPoints(source.lights, sourceOrigin),
+    fixedLights: offsetPoints(source.fixedLights, sourceOrigin),
+  };
+}
+
+function offsetPoints(points: Point[], offset: Point): Point[] {
+  return points.map((point) => ({ x: point.x + offset.x, y: point.y + offset.y }));
+}
+
+function titleLevelDefinition(layout: TitleRenderLayout): LevelDefinition {
   const dummy = { x: 0, y: 0 };
   return {
     id: 'title',
