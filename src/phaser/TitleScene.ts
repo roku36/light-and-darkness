@@ -13,6 +13,14 @@ const DARK_LOGO_ROW = 4;
 const TITLE_LOGO_LIGHT = 'title-logo-light';
 const TITLE_LOGO_DARK = 'title-logo-dark';
 const SHARED_LIGHT_TEXTURE_KEY = 'board-floor-luminance';
+const BUTTON_WIDTH = 34;
+const BUTTON_HEIGHT = 22;
+const BUTTON_HOVER_SCALE = 1.14;
+const BUTTON_COLORS = {
+  complete: { fill: 0xffffff, stroke: 0xffffff, text: '#000000' },
+  available: { fill: 0x777777, stroke: 0xffffff, text: '#000000' },
+  locked: { fill: 0x222222, stroke: 0x777777, text: '#777777' },
+} as const;
 
 interface TitleSceneData {
   source: string;
@@ -40,6 +48,14 @@ interface TitleRenderLayout extends TitleLayout {
   sourceWidth: number;
 }
 
+interface TitleButtonState {
+  index: number;
+  x: number;
+  y: number;
+  unlocked: boolean;
+  button: Phaser.GameObjects.Container;
+}
+
 export class TitleScene extends Phaser.Scene {
   private board!: Phaser.GameObjects.Container;
   private layout!: TitleLayout;
@@ -55,6 +71,8 @@ export class TitleScene extends Phaser.Scene {
   private onStartLevel!: (index: number) => void;
   private keys!: Record<string, Phaser.Input.Keyboard.Key>;
   private started = false;
+  private titleButtons: TitleButtonState[] = [];
+  private hoveredButtonIndex: number | null = null;
 
   constructor() {
     super('title');
@@ -81,7 +99,16 @@ export class TitleScene extends Phaser.Scene {
     this.board.setPostPipeline('OneBitPipeline');
     ensureSpriteAnimations(this);
     this.keys = this.input.keyboard!.addKeys('SPACE,ENTER') as Record<string, Phaser.Input.Keyboard.Key>;
-    this.input.on('pointerdown', () => this.startCurrentLevel());
+    this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+      this.updateButtonHover(pointer.x, pointer.y);
+    });
+    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      const hit = this.buttonAt(pointer.x, pointer.y);
+      if (hit?.unlocked) this.startLevel(hit.index);
+    });
+    this.input.on('gameout', () => {
+      this.setHoveredButton(null);
+    });
     this.scale.on('resize', this.renderTitle, this);
     this.renderTitle();
   }
@@ -100,6 +127,8 @@ export class TitleScene extends Phaser.Scene {
 
   private renderTitle(): void {
     this.board.removeAll(true);
+    this.titleButtons = [];
+    this.hoveredButtonIndex = null;
     this.textures.remove(SHARED_LIGHT_TEXTURE_KEY);
     this.renderLayout = createFullscreenLayout(this.layout, this.scale.width, this.scale.height);
     this.titleLevel = titleLevelDefinition(this.renderLayout);
@@ -147,27 +176,60 @@ export class TitleScene extends Phaser.Scene {
     const y = (this.renderLayout.sourceOrigin.y + this.layout.height + 0.72) * TILE;
     const gap = TILE * 0.92;
     const startX = centerX - ((this.levels.length - 1) * gap) / 2;
-    this.levels.forEach((_level, index) => {
+    this.levels.forEach((level, index) => {
       const unlocked = this.isLevelUnlocked(index);
+      const completed = this.completedLevels.has(level.id);
+      const colors = completed ? BUTTON_COLORS.complete : unlocked ? BUTTON_COLORS.available : BUTTON_COLORS.locked;
       const x = startX + index * gap;
       const button = this.add.container(x, y);
-      const box = this.add.rectangle(0, 0, 34, 22, unlocked ? 0xffffff : 0x222222)
-        .setStrokeStyle(1, 0xffffff);
+      const box = this.add.rectangle(0, 0, BUTTON_WIDTH, BUTTON_HEIGHT, colors.fill)
+        .setStrokeStyle(1, colors.stroke);
       const label = this.add.text(0, 0, String(index + 1).padStart(2, '0'), {
         fontFamily: 'Arial Narrow, Arial, sans-serif',
         fontSize: '12px',
         fontStyle: '900',
-        color: unlocked ? '#000000' : '#ffffff',
+        color: colors.text,
       }).setOrigin(0.5);
       button.add([box, label]);
-      button.setSize(34, 22);
-      button.setInteractive(new Phaser.Geom.Rectangle(-17, -11, 34, 22), Phaser.Geom.Rectangle.Contains);
-      button.on('pointerdown', (_pointer: Phaser.Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => {
-        event.stopPropagation();
-        if (unlocked) this.startLevel(index);
-      });
+      this.titleButtons.push({ index, x, y, unlocked, button });
       this.board.add(button);
     });
+  }
+
+  private updateButtonHover(screenX: number, screenY: number): void {
+    const hit = this.buttonAt(screenX, screenY);
+    this.setHoveredButton(hit?.unlocked ? hit.index : null);
+  }
+
+  private setHoveredButton(index: number | null): void {
+    if (this.hoveredButtonIndex === index) return;
+    const previous = this.titleButtons.find((button) => button.index === this.hoveredButtonIndex);
+    const next = this.titleButtons.find((button) => button.index === index);
+    if (previous) this.tweenButtonScale(previous.button, 1);
+    if (next) this.tweenButtonScale(next.button, BUTTON_HOVER_SCALE);
+    this.hoveredButtonIndex = index;
+    this.input.setDefaultCursor(index === null ? 'default' : 'pointer');
+  }
+
+  private tweenButtonScale(button: Phaser.GameObjects.Container, scale: number): void {
+    this.tweens.killTweensOf(button);
+    this.tweens.add({
+      targets: button,
+      scaleX: scale,
+      scaleY: scale,
+      duration: 70,
+      ease: 'Sine.easeOut',
+    });
+  }
+
+  private buttonAt(screenX: number, screenY: number): TitleButtonState | null {
+    const scale = this.board.scaleX || 1;
+    const localX = (screenX - this.board.x) / scale;
+    const localY = (screenY - this.board.y) / scale;
+    return this.titleButtons.find((button) => (
+      Math.abs(localX - button.x) <= BUTTON_WIDTH / 2
+      && Math.abs(localY - button.y) <= BUTTON_HEIGHT / 2
+    )) ?? null;
   }
 
   private isLevelUnlocked(index: number): boolean {
@@ -186,6 +248,7 @@ export class TitleScene extends Phaser.Scene {
   private startLevel(index: number): void {
     if (this.started) return;
     this.started = true;
+    this.input.setDefaultCursor('default');
     this.onStartLevel(index);
   }
 }
