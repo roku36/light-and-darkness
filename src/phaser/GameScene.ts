@@ -8,6 +8,8 @@ import { createLightMap, updateLightMap } from './visualLighting';
 const TILE = 48;
 const MOVE_MS = 160;
 const FLAME_FRAME_MS = 90;
+const UNDO_FLASH_MS = 34;
+const UNDO_FLASH_ALPHA = 0.14;
 
 type FacingDirection = 'left' | 'right';
 
@@ -31,6 +33,7 @@ export class GameScene extends Phaser.Scene {
   private inputLocked = false;
   private failedMove: { actor: ActorKind; state: GameSession['state'] } | null = null;
   private undoPromptTimer?: Phaser.Time.TimerEvent;
+  private undoFlashUntil = 0;
   private lastMoveAt = 0;
   private oneBitFilterEnabled = true;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -98,14 +101,17 @@ export class GameScene extends Phaser.Scene {
     }
     if (Phaser.Input.Keyboard.JustDown(this.keys.Z)) {
       const from = cloneState(this.session.state);
-      if (this.session.undo()) this.animateStateTransition(from, this.session.state, undefined, true);
+      if (this.session.undo()) {
+        this.flashUndoInput();
+        this.animateStateTransition(from, this.session.state);
+      }
       return;
     }
     if (Phaser.Input.Keyboard.JustDown(this.keys.R)) {
       const from = cloneState(this.session.state);
       this.session.restart();
       this.actorFacing = { light: 'left', dark: 'left' };
-      this.animateStateTransition(from, this.session.state, undefined, true);
+      this.animateStateTransition(from, this.session.state);
       return;
     }
     if (time - this.lastMoveAt < 135) return;
@@ -141,7 +147,7 @@ export class GameScene extends Phaser.Scene {
     if (result.died && result.deadActor && result.failedState) {
       this.inputLocked = true;
       this.failedMove = { actor: result.deadActor, state: result.failedState };
-      this.animateStateTransition(before, result.failedState, undefined, false, () => {
+      this.animateStateTransition(before, result.failedState, undefined, () => {
         this.renderBoard(result.failedState!, result.deadActor!);
         this.burstActor(result.failedState!.actors[result.deadActor!], result.deadActor!);
         this.cameras.main.shake(90, 0.0035);
@@ -157,18 +163,22 @@ export class GameScene extends Phaser.Scene {
       this.cameras.main.shake(55, 0.0015);
       return;
     }
-    this.animateStateTransition(before, result.state, undefined, false, () => {
+    this.animateStateTransition(before, result.state, undefined, () => {
       this.inputLocked = false;
       this.onState(this.session.state);
       if (this.session.state.status === 'complete') this.onComplete();
     });
   }
 
+  private flashUndoInput(): void {
+    this.undoFlashUntil = this.time.now + UNDO_FLASH_MS;
+    this.drawUndoFlash();
+  }
+
   private animateStateTransition(
     from: GameState,
     to: GameState,
     hiddenActor?: ActorKind,
-    pulse = false,
     onComplete?: () => void,
   ): void {
     this.inputLocked = true;
@@ -180,7 +190,6 @@ export class GameScene extends Phaser.Scene {
       ease: 'Sine.easeInOut',
       onUpdate: () => {
         this.renderBoard(interpolateState(from, to, progress.value), hiddenActor);
-        if (pulse) this.board.alpha = 0.94 + progress.value * 0.06;
       },
       onComplete: () => {
         this.board.alpha = 1;
@@ -203,7 +212,10 @@ export class GameScene extends Phaser.Scene {
   private undoFailedMove(): void {
     const from = this.failedMove?.state;
     this.clearFailure();
-    if (from) this.animateStateTransition(from, this.session.state, undefined, true);
+    if (from) {
+      this.flashUndoInput();
+      this.animateStateTransition(from, this.session.state);
+    }
   }
 
   private clearFailure(): void {
@@ -226,6 +238,13 @@ export class GameScene extends Phaser.Scene {
     state.lights.forEach((point) => this.drawLight(point, false));
     if (hiddenActor !== 'light') this.drawActor(state.actors.light, 'light');
     if (hiddenActor !== 'dark') this.drawActor(state.actors.dark, 'dark');
+    if (this.time.now <= this.undoFlashUntil) this.drawUndoFlash();
+  }
+
+  private drawUndoFlash(): void {
+    const flash = this.add.rectangle(0, 0, this.level.width * TILE, this.level.height * TILE, 0xffffff, UNDO_FLASH_ALPHA)
+      .setOrigin(0);
+    this.board.add(flash);
   }
 
   private burstActor(point: Point, kind: ActorKind): void {
