@@ -7,7 +7,18 @@ import { shadowPolygon, type PixelPoint, type PixelRect } from './shadowGeometry
 const FLOOR_TEXTURE_KEY = 'board-floor-luminance';
 export const GROUND_BASE_LUMINANCE = 0.18;
 export const GROUND_PATTERN_LUMINANCE = 0.22;
-const GROUND_BASE_VERTICAL_SCALE = 0.5;
+const GROUND_BASE_NOISE_HORIZONTAL_SCALE = 1;
+const GROUND_BASE_NOISE_VERTICAL_SCALE = 3.0;
+const GROUND_BASE_NOISE_FREQUENCY_SCALE = 1;
+const NORMAL_NOISE_HORIZONTAL_SCALE = 1;
+const NORMAL_NOISE_VERTICAL_SCALE = 3;
+const NORMAL_NOISE_FREQUENCY_SCALE = 1;
+const NORMAL_HEIGHT_STRENGTH = 4.8;
+const TERRAIN_NOISE_OCTAVES = [
+  { frequency: 0.075, offsetX: 0, offsetY: 0, weight: 0.62 },
+  { frequency: 0.19, offsetX: 31, offsetY: 17, weight: 0.28 },
+  { frequency: 0.47, offsetX: 83, offsetY: 59, weight: 0.10 },
+] as const;
 const DIRECT_LIGHT_BASE_LUMINANCE = 0.52;
 const DIRECT_LIGHT_RELIEF_LUMINANCE = 0.58;
 const DIRECT_LIGHT_HORIZONTAL_SCALE = 0.62;
@@ -167,7 +178,7 @@ function getNormalField(width: number, height: number): NormalField {
 
   const heights = new Float32Array(width * height);
   for (let y = 0; y < height; y += 1) {
-    for (let x = 0; x < width; x += 1) heights[y * width + x] = terrainHeight(x, y);
+    for (let x = 0; x < width; x += 1) heights[y * width + x] = terrainNormalHeight(x, y);
   }
 
   const field: NormalField = {
@@ -175,15 +186,14 @@ function getNormalField(width: number, height: number): NormalField {
     y: new Float32Array(width * height),
     z: new Float32Array(width * height),
   };
-  const strength = 4.8;
   for (let y = 0; y < height; y += 1) {
     for (let x = 0; x < width; x += 1) {
       const left = heights[y * width + Math.max(0, x - 1)];
       const right = heights[y * width + Math.min(width - 1, x + 1)];
       const up = heights[Math.max(0, y - 1) * width + x];
       const down = heights[Math.min(height - 1, y + 1) * width + x];
-      const nx = (left - right) * strength;
-      const ny = (up - down) * strength;
+      const nx = (left - right) * NORMAL_HEIGHT_STRENGTH;
+      const ny = (up - down) * NORMAL_HEIGHT_STRENGTH;
       const length = Math.hypot(nx, ny, 1);
       const index = y * width + x;
       field.x[index] = nx / length;
@@ -195,14 +205,39 @@ function getNormalField(width: number, height: number): NormalField {
   return field;
 }
 
-function terrainHeight(x: number, y: number): number {
-  return valueNoise(x * 0.075, y * 0.075) * 0.62
-    + valueNoise(x * 0.19 + 31, y * 0.19 + 17) * 0.28
-    + valueNoise(x * 0.47 + 83, y * 0.47 + 59) * 0.10;
+function terrainNoise(
+  x: number,
+  y: number,
+  horizontalScale: number,
+  verticalScale: number,
+  frequencyScale: number,
+): number {
+  const scaledX = x * horizontalScale;
+  const scaledY = y * verticalScale;
+  return TERRAIN_NOISE_OCTAVES.reduce((sum, octave) => {
+    const frequency = octave.frequency * frequencyScale;
+    return sum + valueNoise(scaledX * frequency + octave.offsetX, scaledY * frequency + octave.offsetY) * octave.weight;
+  }, 0);
 }
 
 function terrainBaseHeight(x: number, y: number): number {
-  return terrainHeight(x, y * GROUND_BASE_VERTICAL_SCALE);
+  return terrainNoise(
+    x,
+    y,
+    GROUND_BASE_NOISE_HORIZONTAL_SCALE,
+    GROUND_BASE_NOISE_VERTICAL_SCALE,
+    GROUND_BASE_NOISE_FREQUENCY_SCALE,
+  );
+}
+
+function terrainNormalHeight(x: number, y: number): number {
+  return terrainNoise(
+    x,
+    y,
+    NORMAL_NOISE_HORIZONTAL_SCALE,
+    NORMAL_NOISE_VERTICAL_SCALE,
+    NORMAL_NOISE_FREQUENCY_SCALE,
+  );
 }
 
 function valueNoise(x: number, y: number): number {
