@@ -33,6 +33,7 @@ let currentLevelSource = '';
 let hotReloadTimer = 0;
 let hotReloading = false;
 let titleVisible = false;
+let clearPromptVisible = false;
 let pendingNextIndex: number | null = null;
 
 const HOT_RELOAD_INTERVAL_MS = 700;
@@ -54,6 +55,7 @@ async function start(): Promise<void> {
 async function showTitle(): Promise<void> {
   window.clearInterval(hotReloadTimer);
   setUndoPrompt(false);
+  clearPromptVisible = false;
   pendingNextIndex = null;
   titleVisible = true;
   currentLevelSource = '';
@@ -84,6 +86,7 @@ async function startLevel(index: number): Promise<void> {
 
 async function mountLevel(index: number, level: LevelDefinition, source: string): Promise<void> {
   setUndoPrompt(false);
+  clearPromptVisible = false;
   pendingNextIndex = null;
   currentIndex = index;
   const entry = levels[index];
@@ -222,6 +225,7 @@ function completeLevel(): void {
   } else {
     pendingNextIndex = null;
   }
+  clearPromptVisible = true;
   showMessage('クリア！\nEnterで次のステージへ', true);
 }
 
@@ -245,11 +249,13 @@ stageSelect.addEventListener('change', () => {
 });
 
 window.addEventListener('keydown', (event) => {
-  if (event.key !== 'Enter' || pendingNextIndex === null) return;
+  if (event.key !== 'Enter' || !clearPromptVisible) return;
   const nextIndex = pendingNextIndex;
+  clearPromptVisible = false;
   pendingNextIndex = null;
   message.classList.remove('visible');
-  void startLevel(nextIndex);
+  if (nextIndex === null) void showTitle();
+  else void startLevel(nextIndex);
 });
 
 function showMessage(text: string, persistent = false): void {
