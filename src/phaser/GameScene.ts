@@ -21,6 +21,14 @@ const FLAME_FRAME_MS = 90;
 const UNDO_FLASH_MS = 34;
 const UNDO_FLASH_ALPHA = 0.0;
 const GOAL_EMIT_INTERVAL_MS = 55;
+const ACTOR_ACTIVE_FRAMES = 2;
+const ACTOR_ACTIVE_FRAME_RATE = 5;
+const ACTOR_WAIT_FRAMES = 2;
+const ACTOR_WAIT_FRAME_RATE = 4;
+const LIGHT_SOURCE_FRAMES = 6;
+const LIGHT_SOURCE_FRAME_RATE = 10;
+const TREASURE_FRAMES = 2;
+const TREASURE_FRAME_RATE = 2;
 
 type FacingDirection = 'left' | 'right';
 
@@ -319,7 +327,7 @@ export class GameScene extends Phaser.Scene {
     const textureKey = fixed ? SPRITE_TEXTURES.fixedLightSource : SPRITE_TEXTURES.lightSource;
     const animationKey = fixed ? SPRITE_ANIMATIONS.fixedLightSourceIdle : SPRITE_ANIMATIONS.lightSourceIdle;
     const sprite = this.add.sprite((point.x + 0.5) * TILE, (point.y + 0.5) * TILE, textureKey, 0);
-    sprite.play(animationKey);
+    this.playSynced(sprite, animationKey, LIGHT_SOURCE_FRAMES, LIGHT_SOURCE_FRAME_RATE);
     this.board.add(sprite);
   }
 
@@ -330,7 +338,7 @@ export class GameScene extends Phaser.Scene {
 
   private drawGoal(point: Point, kind: ActorKind): void {
     const sprite = this.add.sprite((point.x + 0.5) * TILE, (point.y + 0.5) * TILE, treasureTextureKey(kind), 0);
-    sprite.play(treasureAnimationKey(kind));
+    this.playSynced(sprite, treasureAnimationKey(kind), TREASURE_FRAMES, TREASURE_FRAME_RATE);
     this.board.add(sprite);
   }
 
@@ -338,8 +346,18 @@ export class GameScene extends Phaser.Scene {
     const active = this.session.state.activeActor === kind;
     const sprite = this.add.sprite((point.x + 0.5) * TILE, (point.y + 0.5) * TILE, actorTextureKey(kind), 0);
     sprite.setFlipX(this.actorFacing[kind] === 'right');
-    sprite.play(actorAnimationKey(kind, active));
+    this.playSynced(
+      sprite,
+      actorAnimationKey(kind, active),
+      active ? ACTOR_ACTIVE_FRAMES : ACTOR_WAIT_FRAMES,
+      active ? ACTOR_ACTIVE_FRAME_RATE : ACTOR_WAIT_FRAME_RATE,
+    );
     this.board.add(sprite);
+  }
+
+  private playSynced(sprite: Phaser.GameObjects.Sprite, key: string, frameCount: number, frameRate: number): void {
+    const startFrame = Math.floor((this.time.now / 1000) * frameRate) % frameCount;
+    sprite.play({ key, startFrame });
   }
 
   private syncGoalArrivalEffects(state: GameState, hiddenActor?: ActorKind): void {
