@@ -7,10 +7,10 @@ import { shadowPolygon, type PixelPoint, type PixelRect } from './shadowGeometry
 const FLOOR_TEXTURE_KEY = 'board-floor-luminance';
 export const GROUND_BASE_LUMINANCE = 0.18;
 export const GROUND_PATTERN_LUMINANCE = 0.22;
-const DIRECT_LIGHT_BASE_LUMINANCE = 0.42;
+const DIRECT_LIGHT_BASE_LUMINANCE = 0.52;
 const DIRECT_LIGHT_RELIEF_LUMINANCE = 0.58;
 const DIRECT_LIGHT_HORIZONTAL_SCALE = 0.62;
-const DIRECT_LIGHT_FALLOFF = 0.14;
+const DIRECT_LIGHT_FALLOFF = 1.04;
 
 export interface NormalField {
   x: Float32Array;

@@ -160,7 +160,9 @@ export class GameScene extends Phaser.Scene {
         this.renderBoard(result.failedState!, result.deadActor!);
         this.burstActor(result.failedState!.actors[result.deadActor!], result.deadActor!);
         this.cameras.main.shake(90, 0.0035);
-        this.undoPromptTimer = this.time.delayedCall(1000, () => this.onUndoPrompt(true));
+        this.undoPromptTimer = this.time.delayedCall(1000, () => {
+          if (this.failedMove) this.onUndoPrompt(true);
+        });
         this.time.delayedCall(260, () => {
           this.inputLocked = false;
         });

@@ -113,7 +113,12 @@ export class TitleScene extends Phaser.Scene {
     this.drawLogo(TITLE_LOGO_DARK, DARK_LOGO_ROW);
     this.drawStageButtons();
     this.board.setScale(TITLE_SCALE);
-    this.board.setPosition(0, 0);
+    const boardWidth = this.renderLayout.width * TILE * TITLE_SCALE;
+    const boardHeight = this.renderLayout.height * TILE * TITLE_SCALE;
+    this.board.setPosition(
+      Math.floor((this.scale.width - boardWidth) / 2),
+      Math.floor((this.scale.height - boardHeight) / 2),
+    );
   }
 
   private drawLogo(textureKey: string, row: number): void {
@@ -157,12 +162,10 @@ export class TitleScene extends Phaser.Scene {
       button.add([box, label]);
       button.setSize(34, 22);
       button.setInteractive(new Phaser.Geom.Rectangle(-17, -11, 34, 22), Phaser.Geom.Rectangle.Contains);
-      if (unlocked) {
-        button.on('pointerdown', (_pointer: Phaser.Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => {
-          event.stopPropagation();
-          this.startLevel(index);
-        });
-      }
+      button.on('pointerdown', (_pointer: Phaser.Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => {
+        event.stopPropagation();
+        if (unlocked) this.startLevel(index);
+      });
       this.board.add(button);
     });
   }

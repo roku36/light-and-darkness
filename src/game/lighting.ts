@@ -2,17 +2,7 @@ import { chebyshevDistance, pointKey } from './geometry';
 import type { GameState, LevelDefinition, Point } from './types';
 
 const ACTOR_HIT_RADIUS = 0.25;
-const ACTOR_HIT_SAMPLES = [
-  { x: 0, y: 0 },
-  { x: ACTOR_HIT_RADIUS, y: 0 },
-  { x: -ACTOR_HIT_RADIUS, y: 0 },
-  { x: 0, y: ACTOR_HIT_RADIUS },
-  { x: 0, y: -ACTOR_HIT_RADIUS },
-  { x: ACTOR_HIT_RADIUS * Math.SQRT1_2, y: ACTOR_HIT_RADIUS * Math.SQRT1_2 },
-  { x: -ACTOR_HIT_RADIUS * Math.SQRT1_2, y: ACTOR_HIT_RADIUS * Math.SQRT1_2 },
-  { x: ACTOR_HIT_RADIUS * Math.SQRT1_2, y: -ACTOR_HIT_RADIUS * Math.SQRT1_2 },
-  { x: -ACTOR_HIT_RADIUS * Math.SQRT1_2, y: -ACTOR_HIT_RADIUS * Math.SQRT1_2 },
-] as const;
+const ACTOR_HIT_SAMPLES = createActorCircleSamples();
 
 interface WorldPoint {
   x: number;
@@ -56,6 +46,21 @@ function actorHitSamples(actor: Point): WorldPoint[] {
     x: actor.x + 0.5 + sample.x,
     y: actor.y + 0.5 + sample.y,
   }));
+}
+
+function createActorCircleSamples(): WorldPoint[] {
+  const samples: WorldPoint[] = [{ x: 0, y: 0 }];
+  for (const radius of [ACTOR_HIT_RADIUS * 0.5, ACTOR_HIT_RADIUS]) {
+    const steps = radius === ACTOR_HIT_RADIUS ? 16 : 8;
+    for (let index = 0; index < steps; index += 1) {
+      const angle = (index / steps) * Math.PI * 2;
+      samples.push({
+        x: Math.cos(angle) * radius,
+        y: Math.sin(angle) * radius,
+      });
+    }
+  }
+  return samples;
 }
 
 function isWorldPointLit(level: LevelDefinition, state: GameState, target: WorldPoint): boolean {
