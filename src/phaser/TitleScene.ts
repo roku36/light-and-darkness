@@ -28,6 +28,7 @@ interface TitleSceneData {
   completedLevels: string[];
   currentLevel: string;
   onStartLevel: (index: number) => void;
+  onResetProgress: () => void;
 }
 
 interface TitleLevelButton {
@@ -69,6 +70,7 @@ export class TitleScene extends Phaser.Scene {
   private completedLevels = new Set<string>();
   private currentLevel = '';
   private onStartLevel!: (index: number) => void;
+  private onResetProgress!: () => void;
   private keys!: Record<string, Phaser.Input.Keyboard.Key>;
   private started = false;
   private titleButtons: TitleButtonState[] = [];
@@ -84,6 +86,7 @@ export class TitleScene extends Phaser.Scene {
     this.completedLevels = new Set(data.completedLevels);
     this.currentLevel = data.currentLevel;
     this.onStartLevel = data.onStartLevel;
+    this.onResetProgress = data.onResetProgress;
     this.started = false;
   }
 
@@ -99,6 +102,7 @@ export class TitleScene extends Phaser.Scene {
     this.board.setPostPipeline('OneBitPipeline');
     ensureSpriteAnimations(this);
     this.keys = this.input.keyboard!.addKeys('SPACE,ENTER') as Record<string, Phaser.Input.Keyboard.Key>;
+    this.keys.ZERO = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.ZERO);
     this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
       this.updateButtonHover(pointer.x, pointer.y);
     });
@@ -114,6 +118,10 @@ export class TitleScene extends Phaser.Scene {
   }
 
   update(time: number): void {
+    if (Phaser.Input.Keyboard.JustDown(this.keys.ZERO)) {
+      this.onResetProgress();
+      return;
+    }
     if (Phaser.Input.Keyboard.JustDown(this.keys.SPACE) || Phaser.Input.Keyboard.JustDown(this.keys.ENTER)) {
       this.startCurrentLevel();
       return;

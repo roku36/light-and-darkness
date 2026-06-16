@@ -8,7 +8,7 @@ import {
   type LevelIndexEntry,
 } from './game/levelLoader';
 import { parseLevelText, parseLevelTitle } from './game/levelParser';
-import { loadProgress, saveProgress, type ProgressData } from './game/progress';
+import { loadProgress, resetProgress, saveProgress, type ProgressData } from './game/progress';
 import type { GameState, LevelDefinition } from './game/types';
 import { GameScene } from './phaser/GameScene';
 import { OneBitPipeline } from './phaser/OneBitPipeline';
@@ -110,8 +110,17 @@ function mountTitle(source: string): void {
       completedLevels: progress.completed,
       currentLevel: progress.currentLevel,
       onStartLevel: (index: number) => void beginLevel(index),
+      onResetProgress: () => resetTitleProgress(source),
     });
   });
+}
+
+function resetTitleProgress(source: string): void {
+  progress = resetProgress(levels[0].id);
+  currentIndex = 0;
+  buildStageSelect();
+  stageSelect.value = levels[0].id;
+  mountTitle(source);
 }
 
 function createPhaserGame(startScene: (bootedGame: Phaser.Game) => void): void {

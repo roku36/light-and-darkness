@@ -22,3 +22,8 @@ export function loadProgress(fallbackLevel: string): ProgressData {
 export function saveProgress(progress: ProgressData): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
 }
+
+export function resetProgress(fallbackLevel: string): ProgressData {
+  localStorage.removeItem(STORAGE_KEY);
+  return { currentLevel: fallbackLevel, completed: [] };
+}
