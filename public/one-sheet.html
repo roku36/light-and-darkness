@@ -6,11 +6,10 @@
   <title>光の中の宝 / 影の中の宝 企画書</title>
   <style>
     :root {
-      --ink: #050505;
       --paper: #f7f7f2;
-      --muted: #555;
-      --line: #111;
-      --soft: #e7e7df;
+      --ink: #050505;
+      --thin: 2px solid #050505;
+      --thick: 6px solid #050505;
       --sheet-w: 1600px;
       --sheet-h: 900px;
     }
@@ -34,8 +33,6 @@
     }
 
     body {
-      display: grid;
-      place-items: center;
       position: relative;
       overflow: hidden;
     }
@@ -49,232 +46,235 @@
       overflow: hidden;
       transform: translate(-50%, -50%) scale(var(--fit-scale, 1));
       transform-origin: center;
-      background:
-        linear-gradient(90deg, rgba(0, 0, 0, 0.035) 1px, transparent 1px),
-        linear-gradient(rgba(0, 0, 0, 0.035) 1px, transparent 1px),
-        var(--paper);
-      background-size: 40px 40px;
+      background: var(--paper);
       box-shadow: 0 18px 60px rgba(0, 0, 0, 0.28);
     }
 
-    .content {
+    .sheet::before {
+      content: "";
       position: absolute;
       inset: 0;
-      padding: 60px 88px 64px;
-      display: grid;
-      grid-template-columns: 1.02fr 1.3fr;
-      grid-template-rows: 180px 1fr 178px;
-      gap: 26px 46px;
+      background:
+        linear-gradient(90deg, rgba(0, 0, 0, 0.045) 1px, transparent 1px),
+        linear-gradient(rgba(0, 0, 0, 0.045) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
     }
 
-    .title {
-      grid-column: 1;
-      grid-row: 1;
+    .content {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      padding: 58px 82px 58px;
+      display: grid;
+      grid-template-columns: 670px 1fr;
+      grid-template-rows: 150px 320px 232px 44px;
+      gap: 18px 42px;
+    }
+
+    h1 {
       margin: 0;
-      font-size: clamp(48px, 5.3vw, 92px);
-      line-height: 1.08;
-      letter-spacing: 0.05em;
+      font-size: 74px;
+      line-height: 1.04;
+      letter-spacing: 0.06em;
       font-weight: 900;
     }
 
     .meta {
-      grid-column: 2;
-      grid-row: 1;
       justify-self: end;
-      align-self: start;
-      padding-top: 6px;
-      text-align: left;
-      font-size: clamp(18px, 1.55vw, 27px);
-      line-height: 1.5;
+      padding-top: 12px;
+      font-size: 25px;
+      line-height: 1.48;
       letter-spacing: 0.04em;
+      font-weight: 500;
     }
 
-    .meta strong { font-weight: 800; }
+    .meta strong { font-weight: 900; }
 
-    .lead {
+    .intro {
       grid-column: 1;
       grid-row: 2;
-      align-self: stretch;
+      border-top: var(--thick);
+      border-bottom: var(--thin);
+      padding: 22px 0 18px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      gap: 22px;
     }
 
-    .concept {
-      border-top: 6px solid var(--line);
-      border-bottom: 2px solid var(--line);
-      padding: 24px 0 26px;
-    }
-
-    .eyebrow {
+    .section-label {
       margin: 0 0 12px;
-      font-size: 19px;
-      font-weight: 800;
-      letter-spacing: 0.12em;
-    }
-
-    .concept p {
-      margin: 0;
-      font-size: clamp(23px, 2.3vw, 39px);
-      line-height: 1.34;
-      font-weight: 850;
-      letter-spacing: 0.035em;
-    }
-
-    .summary {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
-    }
-
-    .summary-card {
-      min-height: 118px;
-      padding: 18px 18px 16px;
-      border: 2px solid var(--line);
-      background: rgba(255, 255, 255, 0.68);
-    }
-
-    .summary-card h2,
-    .rules h2,
-    .controls h2,
-    .features h2 {
-      margin: 0 0 10px;
-      font-size: 20px;
-      line-height: 1;
-      letter-spacing: 0.12em;
+      font-size: 21px;
       font-weight: 900;
+      letter-spacing: 0.12em;
     }
 
-    .summary-card p {
+    .intro-main {
       margin: 0;
-      color: #111;
-      font-size: 18px;
-      line-height: 1.46;
-      font-weight: 600;
+      font-size: 32px;
+      line-height: 1.36;
+      font-weight: 900;
+      letter-spacing: 0.02em;
     }
 
-    .visual {
+    .goal {
+      margin: 18px 0 0;
+      padding: 13px 16px;
+      border: var(--thin);
+      background: rgba(255, 255, 255, 0.72);
+      font-size: 20px;
+      line-height: 1.45;
+      font-weight: 800;
+    }
+
+    .screen {
       grid-column: 2;
       grid-row: 2;
-      position: relative;
+      min-height: 0;
       display: grid;
       grid-template-rows: 1fr auto;
       gap: 12px;
-      min-height: 0;
     }
 
-    .frame {
-      position: relative;
-      min-height: 0;
-      border: 5px solid #000;
+    .screen-frame {
+      margin: 0;
+      border: 6px solid #000;
       background: #000;
       overflow: hidden;
     }
 
-    .frame img {
+    .screen-frame img {
       width: 100%;
       height: 100%;
+      display: block;
       object-fit: cover;
       image-rendering: pixelated;
-      display: block;
     }
 
-    .caption {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 18px;
-      font-size: 17px;
+    .screen-note {
+      font-size: 19px;
       line-height: 1.35;
       font-weight: 800;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.03em;
     }
 
-    .sprite-row {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      flex: none;
-    }
-
-    .sprite-row img {
-      width: 42px;
-      height: 42px;
-      object-fit: none;
-      object-position: left top;
-      image-rendering: pixelated;
-      border: 2px solid #000;
-      background: #fff;
-    }
-
-    .bottom {
+    .mechanics {
       grid-column: 1 / -1;
       grid-row: 3;
       display: grid;
-      grid-template-columns: 1.06fr 1fr 0.86fr;
-      gap: 22px;
-      align-items: stretch;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
     }
 
-    .rules,
-    .controls,
-    .features {
-      border: 2px solid var(--line);
-      background: rgba(255, 255, 255, 0.72);
-      padding: 20px 22px;
-    }
-
-    .rules ol,
-    .features ul,
-    .controls ul {
-      margin: 0;
-      padding-left: 1.25em;
-      font-size: 18px;
-      line-height: 1.55;
-      font-weight: 650;
-    }
-
-    .controls ul {
-      list-style: none;
-      padding-left: 0;
+    .card {
+      min-height: 0;
+      border: var(--thin);
+      background: rgba(255, 255, 255, 0.76);
+      padding: 12px 14px;
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px 12px;
+      grid-template-rows: auto 76px 1fr;
+      gap: 8px;
+    }
+
+    .card h2 {
+      margin: 0;
+      font-size: 21px;
+      line-height: 1.1;
+      font-weight: 900;
+      letter-spacing: 0.05em;
+    }
+
+    .diagram {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      min-height: 76px;
+      background:
+        linear-gradient(90deg, rgba(0, 0, 0, 0.08) 1px, transparent 1px),
+        linear-gradient(rgba(0, 0, 0, 0.08) 1px, transparent 1px),
+        #fdfdf8;
+      background-size: 28px 28px;
+      border: 2px solid #000;
+    }
+
+    .diagram.duo {
+      gap: 10px;
+    }
+
+    .sprite {
+      width: 48px;
+      height: 48px;
+      flex: 0 0 auto;
+      image-rendering: pixelated;
+      background-repeat: no-repeat;
+      background-position: 0 0;
+      background-size: auto 48px;
+    }
+
+    .sprite.big {
+      width: 52px;
+      height: 52px;
+      background-size: auto 52px;
+    }
+
+    .sprite.light { background-image: url("/assets/sprites/actor-light.png"); }
+    .sprite.dark { background-image: url("/assets/sprites/actor-dark.png"); }
+    .sprite.crate { background-image: url("/assets/sprites/crate.png"); }
+    .sprite.lamp { background-image: url("/assets/sprites/light-source.png"); }
+    .sprite.light-treasure { background-image: url("/assets/sprites/light-treasure.png"); }
+    .sprite.dark-treasure { background-image: url("/assets/sprites/dark-treasure.png"); }
+    .face-right { transform: scaleX(-1); }
+
+    .arrow {
+      font-size: 36px;
+      line-height: 1;
+      font-weight: 900;
+    }
+
+    .symbol {
+      min-width: 74px;
+      padding: 7px 10px;
+      border: 2px solid #000;
+      text-align: center;
+      font-size: 21px;
+      line-height: 1.1;
+      font-weight: 900;
+      background: #fff;
+    }
+
+    .symbol.black {
+      background: #000;
+      color: #fff;
+    }
+
+    .card p {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.38;
+      font-weight: 750;
+    }
+
+    .controls {
+      grid-column: 1 / -1;
+      grid-row: 4;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 9px;
+      border-top: 3px solid #000;
+      font-size: 18px;
+      font-weight: 850;
+      letter-spacing: 0.03em;
     }
 
     .key {
       display: inline-block;
-      min-width: 3.2em;
-      margin-right: 0.45em;
-      padding: 0.12em 0.42em;
-      border: 2px solid #000;
+      margin: 0 6px;
+      padding: 3px 9px 4px;
       background: #000;
       color: #fff;
-      text-align: center;
       font-weight: 900;
-      letter-spacing: 0.04em;
-    }
-
-    .badge {
-      display: inline-block;
-      margin-left: 0.2em;
-      padding: 0.1em 0.45em 0.13em;
-      background: #000;
-      color: #fff;
-      font-size: 0.86em;
-      font-weight: 900;
-    }
-
-    .corner-mark {
-      position: absolute;
-      width: 92px;
-      height: 92px;
-      right: 70px;
-      bottom: 58px;
-      border-right: 8px solid #000;
-      border-bottom: 8px solid #000;
-      pointer-events: none;
     }
 
     @media print {
@@ -283,9 +283,7 @@
         margin: 0;
       }
 
-      body {
-        background: #fff;
-      }
+      body { background: #fff; }
 
       .sheet {
         width: 16in;
@@ -299,86 +297,90 @@
 <body>
   <main class="sheet" aria-label="光の中の宝・影の中の宝 企画書">
     <section class="content">
-      <h1 class="title">光の中の宝<br>影の中の宝</h1>
+      <h1>光の中の宝<br>影の中の宝</h1>
 
       <div class="meta">
         テーマ <strong>「光と影」</strong> × <strong>「探索」</strong><br>
-        16:9 One Sheet / 2026/06/18
+        一枚企画書 / 2026年6月18日
       </div>
 
-      <section class="lead">
-        <div class="concept">
-          <p class="eyebrow">TOP-DOWN GRID PUZZLE</p>
-          <p>
-            光で生きる者と、影で生きる者。<br>
-            2人を切り替え、箱と光源で安全な道を作り、2つの宝へ同時に到達する。
+      <section class="intro">
+        <div>
+          <p class="section-label">何をするゲームか</p>
+          <p class="intro-main">
+            光で生きる人と、影で生きる人を切り替え、箱と光源を押して道を作る。
           </p>
         </div>
-
-        <div class="summary">
-          <article class="summary-card">
-            <h2>狙い</h2>
-            <p>「動く」より先に、光がどこへ届き、どこに影が生まれるかを読むパズル。</p>
-          </article>
-          <article class="summary-card">
-            <h2>見た目</h2>
-            <p>白・黒・ディザの1bit表現。光で地面の凹凸が浮かび、影は情報を削る。</p>
-          </article>
-        </div>
+        <p class="goal">
+          目的は、光の宝に光側、影の宝に影側を同時に乗せること。片方だけ到達してもクリアではない。
+        </p>
       </section>
 
-      <section class="visual">
-        <figure class="frame">
-          <img src="/assets/proposal/game-capture.png" alt="ゲーム画面。光と影、箱、光源、宝が配置されたステージ。">
+      <section class="screen">
+        <figure class="screen-frame">
+          <img src="/assets/proposal/game-capture.png" alt="光と影を作りながら進むステージ画面。">
         </figure>
-        <div class="caption">
-          <span>光は壁と箱で遮られる。箱を押すだけで、影の通路も宝への条件も変化する。</span>
-          <div class="sprite-row" aria-label="ゲーム内スプライト">
-            <img src="/assets/sprites/actor-light.png" alt="光キャラクター">
-            <img src="/assets/sprites/actor-dark.png" alt="影キャラクター">
-            <img src="/assets/sprites/light-source.png" alt="光源">
-            <img src="/assets/sprites/crate.png" alt="木箱">
-            <img src="/assets/sprites/light-treasure.png" alt="光の宝">
-            <img src="/assets/sprites/dark-treasure.png" alt="影の宝">
-          </div>
+        <div class="screen-note">
+          光はまっすぐ届き、壁と箱で止まる。箱を1つ押すだけで、影の通路と危険地帯が変わる。
         </div>
       </section>
 
-      <section class="bottom">
-        <article class="rules">
-          <h2>ゲームルール</h2>
-          <ol>
-            <li>光側は光の中、影側は影の中だけで生存できる。</li>
-            <li>光源は無限距離に届くが、壁と木箱で遮られる。</li>
-            <li>光の宝と影の宝に、対応する2人が同時に乗ればクリア。</li>
-          </ol>
+      <section class="mechanics" aria-label="ゲームの仕組み">
+        <article class="card">
+          <h2>箱を押す</h2>
+          <div class="diagram">
+            <span class="sprite big light face-right" aria-label="光側の人"></span>
+            <span class="arrow">→</span>
+            <span class="sprite big crate" aria-label="木箱"></span>
+          </div>
+          <p>2人とも木箱を押せる。箱は光を遮るので、動かすと影の形も変わる。</p>
         </article>
 
-        <article class="controls">
-          <h2>操作</h2>
-          <ul>
-            <li><span class="key">↑↓←→</span>移動</li>
-            <li><span class="key">WASD</span>移動</li>
-            <li><span class="key">Space</span>操作キャラ切替</li>
-            <li><span class="key">Z</span>一手戻る</li>
-            <li><span class="key">R</span>リスタート</li>
-            <li><span class="key">Esc</span>タイトルへ</li>
-          </ul>
+        <article class="card">
+          <h2>光源を押す</h2>
+          <div class="diagram">
+            <span class="sprite big light face-right" aria-label="光側の人"></span>
+            <span class="arrow">→</span>
+            <span class="sprite big lamp" aria-label="光源"></span>
+          </div>
+          <p>光源を動かせるのは光側だけ。影側は光源に近づくと危険になる。</p>
         </article>
 
-        <article class="features">
-          <h2>特徴</h2>
-          <ul>
-            <li>倉庫番風の押しパズル <span class="badge">TURN</span></li>
-            <li>光源は光側だけが押せる <span class="badge">LIGHT</span></li>
-            <li>失敗後はUndoで戻す <span class="badge">UNDO</span></li>
-            <li>ステージはテキストで制作 <span class="badge">TXT</span></li>
-          </ul>
+        <article class="card">
+          <h2>安全な場所</h2>
+          <div class="diagram duo">
+            <span class="sprite light" aria-label="光側の人"></span>
+            <span class="symbol">光</span>
+            <span class="sprite dark" aria-label="影側の人"></span>
+            <span class="symbol black">影</span>
+          </div>
+          <p>光側は光の中、影側は影の中でだけ安全。移動前にどのマスが安全か読む。</p>
+        </article>
+
+        <article class="card">
+          <h2>同時に宝へ</h2>
+          <div class="diagram duo">
+            <span class="sprite light" aria-label="光側の人"></span>
+            <span class="arrow">＋</span>
+            <span class="sprite light-treasure" aria-label="光の宝"></span>
+            <span class="sprite dark" aria-label="影側の人"></span>
+            <span class="arrow">＋</span>
+            <span class="sprite dark-treasure" aria-label="影の宝"></span>
+          </div>
+          <p>2人がそれぞれ対応する宝に同時に立った状態を作る。最後の一手まで考える。</p>
         </article>
       </section>
+
+      <div class="controls">
+        <span>移動 <span class="key">↑↓←→</span><span class="key">WASD</span></span>
+        <span>切替 <span class="key">スペース</span></span>
+        <span>一手戻る <span class="key">Z</span></span>
+        <span>やり直し <span class="key">R</span></span>
+        <span>タイトルへ <span class="key">Esc</span></span>
+      </div>
     </section>
-    <div class="corner-mark" aria-hidden="true"></div>
   </main>
+
   <script>
     const fitSheet = () => {
       const scale = Math.min(window.innerWidth / 1600, window.innerHeight / 900);
