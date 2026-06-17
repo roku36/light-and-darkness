@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import type { GameState, LevelDefinition, Point } from '../game/types';
 import { createLightMap, updateLightMap } from './visualLighting';
 import { ensureSpriteAnimations, preloadSpriteSheets, SPRITE_ANIMATIONS, SPRITE_TEXTURES } from './spriteSheets';
-import { playGridTransition } from './sceneTransition';
+import { playGridTransition, preloadTransitionTexture } from './sceneTransition';
 
 const TILE = 48;
 const TITLE_SCALE = 3;
@@ -97,6 +97,7 @@ export class TitleScene extends Phaser.Scene {
 
   preload(): void {
     preloadSpriteSheets(this, TILE);
+    preloadTransitionTexture(this);
     this.load.image(TITLE_LOGO_LIGHT, '/assets/title/logo-light.png');
     this.load.image(TITLE_LOGO_DARK, '/assets/title/logo-dark.png');
   }

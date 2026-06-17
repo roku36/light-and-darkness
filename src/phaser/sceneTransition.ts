@@ -1,19 +1,31 @@
 import Phaser from 'phaser';
 
 const TRANSITION_MASK_TEXTURE = 'scene-transition-mask';
+const TRANSITION_SOURCE_MASK_TEXTURE = 'transition-source-mask';
+const TRANSITION_SOURCE_MASK_PATH = '/assets/fx/transition-mask.png';
 const TILE_SIZE = 32;
 const TRANSITION_DEPTH = 100000;
 const TRANSITION_DURATION_MS = 980;
-const TRANSITION_STAGGER = 0.42;
 const ROTATION_RADIANS = Math.PI * 0.72;
+
+interface ProgressLookup {
+  columns: number;
+  rows: number;
+  values: Float32Array;
+}
+
+export function preloadTransitionTexture(scene: Phaser.Scene): void {
+  scene.load.image(TRANSITION_SOURCE_MASK_TEXTURE, TRANSITION_SOURCE_MASK_PATH);
+}
 
 export function playGridTransition(scene: Phaser.Scene): Promise<void> {
   const width = scene.scale.width;
   const height = scene.scale.height;
   const texture = createTransitionTexture(scene, width, height);
+  const progressLookup = createProgressLookup(scene, width, height);
   const overlay = scene.add.image(0, 0, TRANSITION_MASK_TEXTURE).setOrigin(0);
   overlay.setDepth(TRANSITION_DEPTH);
-  renderTransitionMask(texture, width, height, 0);
+  renderTransitionMask(texture, width, height, progressLookup, 0);
 
   return new Promise((resolve) => {
     scene.tweens.addCounter({
@@ -22,7 +34,7 @@ export function playGridTransition(scene: Phaser.Scene): Promise<void> {
       duration: TRANSITION_DURATION_MS,
       ease: 'Linear',
       onUpdate: (tween) => {
-        renderTransitionMask(texture, width, height, tween.getValue() ?? 0);
+        renderTransitionMask(texture, width, height, progressLookup, tween.getValue() ?? 0);
       },
       onComplete: () => {
         overlay.destroy();
@@ -43,21 +55,16 @@ function renderTransitionMask(
   texture: Phaser.Textures.CanvasTexture,
   width: number,
   height: number,
+  progressLookup: ProgressLookup,
   progress: number,
 ): void {
   const context = texture.getContext();
   const image = context.createImageData(width, height);
 
-  const columns = Math.ceil(width / TILE_SIZE);
-  const rows = Math.ceil(height / TILE_SIZE);
-  const centerColumn = (columns - 1) / 2;
-  const centerRow = (rows - 1) / 2;
-  const maxDistance = Math.max(1, Math.hypot(centerColumn, centerRow));
-
-  for (let row = 0; row < rows; row += 1) {
-    for (let column = 0; column < columns; column += 1) {
-      const distance = Math.hypot(column - centerColumn, row - centerRow) / maxDistance;
-      const localProgress = clamp01((progress - distance * TRANSITION_STAGGER) / (1 - TRANSITION_STAGGER));
+  for (let row = 0; row < progressLookup.rows; row += 1) {
+    for (let column = 0; column < progressLookup.columns; column += 1) {
+      const revealAt = progressLookup.values[row * progressLookup.columns + column];
+      const localProgress = clamp01((progress - revealAt * 0.42) / 0.58);
       const eased = easeInOutCubic(localProgress);
       const scale = 1 - eased;
       if (scale <= 0) continue;
@@ -71,6 +78,33 @@ function renderTransitionMask(
 
   context.putImageData(image, 0, 0);
   texture.refresh();
+}
+
+function createProgressLookup(scene: Phaser.Scene, width: number, height: number): ProgressLookup {
+  const columns = Math.ceil(width / TILE_SIZE);
+  const rows = Math.ceil(height / TILE_SIZE);
+  const texture = scene.textures.get(TRANSITION_SOURCE_MASK_TEXTURE);
+  const source = texture.getSourceImage() as CanvasImageSource & { width: number; height: number };
+  const canvas = document.createElement('canvas');
+  canvas.width = source.width;
+  canvas.height = source.height;
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('Could not read transition progress texture.');
+  context.drawImage(source, 0, 0);
+  const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+  const values = new Float32Array(columns * rows);
+
+  for (let row = 0; row < rows; row += 1) {
+    for (let column = 0; column < columns; column += 1) {
+      const u = columns <= 1 ? 0.5 : column / (columns - 1);
+      const v = rows <= 1 ? 0.5 : row / (rows - 1);
+      const x = Math.min(canvas.width - 1, Math.max(0, Math.round(u * (canvas.width - 1))));
+      const y = Math.min(canvas.height - 1, Math.max(0, Math.round(v * (canvas.height - 1))));
+      values[row * columns + column] = pixels[(y * canvas.width + x) * 4] / 255;
+    }
+  }
+
+  return { columns, rows, values };
 }
 
 function drawHardMaskSquare(

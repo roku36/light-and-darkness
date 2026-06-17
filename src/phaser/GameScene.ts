@@ -13,7 +13,7 @@ import {
   treasureTextureKey,
 } from './spriteSheets';
 import { createLightMap, updateLightMap } from './visualLighting';
-import { playGridTransition } from './sceneTransition';
+import { playGridTransition, preloadTransitionTexture } from './sceneTransition';
 
 const TILE = 48;
 const MOVE_MS = 160;
@@ -86,6 +86,7 @@ export class GameScene extends Phaser.Scene {
 
   preload(): void {
     preloadSpriteSheets(this, TILE);
+    preloadTransitionTexture(this);
   }
 
   create(): void {

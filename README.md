@@ -53,3 +53,7 @@ scale=1
 | `l` / `d` | light / dark treasure |
 
 Maps must have equal row widths, a closed wall perimeter, exactly one of each character and treasure, and one connected floor region.
+
+## Transition texture
+
+The scene transition uses `public/assets/fx/transition-mask.png` as a grayscale 0..1 transition mask. Each 32px grid cell stores a hard, uniform reveal-order value. At runtime Phaser samples it into a screen-sized `CanvasTexture` mask, then updates that mask as hard 0/1 alpha while grid squares rotate and shrink.
