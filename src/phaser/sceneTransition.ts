@@ -10,13 +10,14 @@ const transitionFragmentShader = `
 precision mediump float;
 
 uniform vec2 resolution;
+uniform vec2 maskSize;
 uniform sampler2D iChannel0;
 uniform float progress;
 
 varying vec2 fragCoord;
 
 void main() {
-  vec2 uv = fragCoord / resolution.xy;
+  vec2 uv = (mod(fragCoord, maskSize) + vec2(0.5)) / maskSize;
   float disappearAt = texture2D(iChannel0, uv).r;
   float visible = 1.0 - step(disappearAt, progress);
   gl_FragColor = vec4(0.0, 0.0, 0.0, visible);
@@ -44,7 +45,9 @@ export function playGridTransition(scene: Phaser.Scene): Promise<void> {
     },
   ).setOrigin(0);
   shader.setDepth(TRANSITION_DEPTH);
+  shader.setScrollFactor(0);
   shader.setUniform('progress.value', 0);
+  shader.setUniform('maskSize.value', transitionMaskSize(scene));
 
   return new Promise((resolve) => {
     scene.tweens.addCounter({
@@ -70,6 +73,13 @@ function transitionShader(): Phaser.Display.BaseShader {
     undefined,
     {
       progress: { type: '1f', value: 0 },
+      maskSize: { type: '2f', value: { x: 1280, y: 720 } },
     },
   );
+}
+
+function transitionMaskSize(scene: Phaser.Scene): { x: number; y: number } {
+  const texture = scene.textures.get(TRANSITION_SOURCE_MASK_TEXTURE);
+  const source = texture.getSourceImage() as HTMLImageElement | HTMLCanvasElement;
+  return { x: source.width, y: source.height };
 }
