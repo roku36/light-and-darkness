@@ -8,6 +8,7 @@ export const SPRITE_TEXTURES = {
   fixedLightSource: 'sprite-fixed-light-source',
   wall: 'sprite-wall',
   crate: 'sprite-crate',
+  grid: 'sprite-grid',
   lightTreasure: 'sprite-light-treasure',
   darkTreasure: 'sprite-dark-treasure',
 } as const;
@@ -30,6 +31,7 @@ const SPRITE_PATHS = {
   [SPRITE_TEXTURES.fixedLightSource]: '/assets/sprites/fixed-light-source.png',
   [SPRITE_TEXTURES.wall]: '/assets/sprites/wall.png',
   [SPRITE_TEXTURES.crate]: '/assets/sprites/crate.png',
+  [SPRITE_TEXTURES.grid]: '/assets/sprites/grid.png',
   [SPRITE_TEXTURES.lightTreasure]: '/assets/sprites/light-treasure.png',
   [SPRITE_TEXTURES.darkTreasure]: '/assets/sprites/dark-treasure.png',
 } as const;
@@ -46,6 +48,7 @@ export function preloadSpriteSheets(scene: Phaser.Scene, tileSize: number): void
   loadSpriteSheet(scene, SPRITE_TEXTURES.darkTreasure, SPRITE_PATHS[SPRITE_TEXTURES.darkTreasure], tileSize);
   loadImage(scene, SPRITE_TEXTURES.wall, SPRITE_PATHS[SPRITE_TEXTURES.wall]);
   loadImage(scene, SPRITE_TEXTURES.crate, SPRITE_PATHS[SPRITE_TEXTURES.crate]);
+  loadImage(scene, SPRITE_TEXTURES.grid, SPRITE_PATHS[SPRITE_TEXTURES.grid]);
 }
 
 export function ensureSpriteAnimations(scene: Phaser.Scene): void {

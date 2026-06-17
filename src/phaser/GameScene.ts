@@ -281,6 +281,7 @@ export class GameScene extends Phaser.Scene {
     this.lightMap = undefined;
     this.lightMap = createLightMap(this, this.level, state, TILE, this.lightAnimationStep);
     this.board.add(this.lightMap);
+    this.drawGridOverlay();
     this.level.goals.light && this.drawGoal(this.level.goals.light, 'light');
     this.level.goals.dark && this.drawGoal(this.level.goals.dark, 'dark');
     this.level.walls.forEach((point) => this.drawWall(point));
@@ -298,6 +299,14 @@ export class GameScene extends Phaser.Scene {
     const flash = this.add.rectangle(0, 0, this.level.width * TILE, this.level.height * TILE, 0xffffff, UNDO_FLASH_ALPHA)
       .setOrigin(0);
     this.board.add(flash);
+  }
+
+  private drawGridOverlay(): void {
+    for (let y = 0; y < this.level.height; y += 1) {
+      for (let x = 0; x < this.level.width; x += 1) {
+        this.drawStaticSprite({ x, y }, SPRITE_TEXTURES.grid);
+      }
+    }
   }
 
   private burstActor(point: Point, kind: ActorKind): void {
