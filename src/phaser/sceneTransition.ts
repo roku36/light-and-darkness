@@ -1,18 +1,48 @@
 import Phaser from 'phaser';
 
-const TRANSITION_MASK_TEXTURE = 'scene-transition-mask';
+const TRANSITION_SHADER_KEY = 'transition-mask-shader';
 const TRANSITION_SOURCE_MASK_TEXTURE = 'transition-source-mask';
 const TRANSITION_SOURCE_MASK_PATH = '/assets/fx/transition-mask.png';
-const TILE_SIZE = 32;
 const TRANSITION_DEPTH = 100000;
 const TRANSITION_DURATION_MS = 980;
-const ROTATION_RADIANS = Math.PI * 0.72;
+const TILE_SIZE = 32;
 
-interface ProgressLookup {
-  columns: number;
-  rows: number;
-  values: Float32Array;
+const transitionFragmentShader = `
+precision mediump float;
+
+uniform vec2 resolution;
+uniform sampler2D iChannel0;
+uniform float progress;
+
+varying vec2 fragCoord;
+
+float easeInOutCubic(float value) {
+  return value < 0.5
+    ? 4.0 * value * value * value
+    : 1.0 - pow(-2.0 * value + 2.0, 3.0) * 0.5;
 }
+
+void main() {
+  vec2 uv = fragCoord / resolution.xy;
+  float revealAt = texture2D(iChannel0, uv).r;
+  float localProgress = clamp((progress - revealAt * 0.42) / 0.58, 0.0, 1.0);
+  float eased = easeInOutCubic(localProgress);
+  float squareScale = 1.0 - eased;
+
+  vec2 tile = vec2(${TILE_SIZE.toFixed(1)});
+  vec2 cell = floor(gl_FragCoord.xy / tile);
+  vec2 center = (cell + vec2(0.5)) * tile;
+  vec2 delta = gl_FragCoord.xy - center;
+  float direction = mod(cell.x + cell.y, 2.0) < 1.0 ? 1.0 : -1.0;
+  float angle = 2.2619467 * eased * direction;
+  float c = cos(angle);
+  float s = sin(angle);
+  vec2 local = vec2(delta.x * c + delta.y * s, -delta.x * s + delta.y * c);
+  float halfSize = tile.x * 0.5 * squareScale;
+  float inside = step(abs(local.x), halfSize) * step(abs(local.y), halfSize);
+
+  gl_FragColor = vec4(0.0, 0.0, 0.0, inside);
+}`;
 
 export function preloadTransitionTexture(scene: Phaser.Scene): void {
   scene.load.image(TRANSITION_SOURCE_MASK_TEXTURE, TRANSITION_SOURCE_MASK_PATH);
@@ -21,11 +51,22 @@ export function preloadTransitionTexture(scene: Phaser.Scene): void {
 export function playGridTransition(scene: Phaser.Scene): Promise<void> {
   const width = scene.scale.width;
   const height = scene.scale.height;
-  const texture = createTransitionTexture(scene, width, height);
-  const progressLookup = createProgressLookup(scene, width, height);
-  const overlay = scene.add.image(0, 0, TRANSITION_MASK_TEXTURE).setOrigin(0);
-  overlay.setDepth(TRANSITION_DEPTH);
-  renderTransitionMask(texture, width, height, progressLookup, 0);
+  const shader = scene.add.shader(
+    transitionShader(),
+    0,
+    0,
+    width,
+    height,
+    [TRANSITION_SOURCE_MASK_TEXTURE],
+    {
+      minFilter: 'nearest',
+      magFilter: 'nearest',
+      wrapS: 'clamp_to_edge',
+      wrapT: 'clamp_to_edge',
+    },
+  ).setOrigin(0);
+  shader.setDepth(TRANSITION_DEPTH);
+  shader.setUniform('progress.value', 0);
 
   return new Promise((resolve) => {
     scene.tweens.addCounter({
@@ -34,118 +75,23 @@ export function playGridTransition(scene: Phaser.Scene): Promise<void> {
       duration: TRANSITION_DURATION_MS,
       ease: 'Linear',
       onUpdate: (tween) => {
-        renderTransitionMask(texture, width, height, progressLookup, tween.getValue() ?? 0);
+        shader.setUniform('progress.value', tween.getValue() ?? 0);
       },
       onComplete: () => {
-        overlay.destroy();
+        shader.destroy();
         resolve();
       },
     });
   });
 }
 
-function createTransitionTexture(scene: Phaser.Scene, width: number, height: number): Phaser.Textures.CanvasTexture {
-  if (scene.textures.exists(TRANSITION_MASK_TEXTURE)) scene.textures.remove(TRANSITION_MASK_TEXTURE);
-  const texture = scene.textures.createCanvas(TRANSITION_MASK_TEXTURE, width, height);
-  if (!texture) throw new Error('Could not create transition mask texture.');
-  return texture;
-}
-
-function renderTransitionMask(
-  texture: Phaser.Textures.CanvasTexture,
-  width: number,
-  height: number,
-  progressLookup: ProgressLookup,
-  progress: number,
-): void {
-  const context = texture.getContext();
-  const image = context.createImageData(width, height);
-
-  for (let row = 0; row < progressLookup.rows; row += 1) {
-    for (let column = 0; column < progressLookup.columns; column += 1) {
-      const revealAt = progressLookup.values[row * progressLookup.columns + column];
-      const localProgress = clamp01((progress - revealAt * 0.42) / 0.58);
-      const eased = easeInOutCubic(localProgress);
-      const scale = 1 - eased;
-      if (scale <= 0) continue;
-
-      const x = column * TILE_SIZE + TILE_SIZE / 2;
-      const y = row * TILE_SIZE + TILE_SIZE / 2;
-      const angle = ROTATION_RADIANS * eased * (((row + column) % 2 === 0) ? 1 : -1);
-      drawHardMaskSquare(image.data, width, height, x, y, TILE_SIZE * scale / 2, angle);
-    }
-  }
-
-  context.putImageData(image, 0, 0);
-  texture.refresh();
-}
-
-function createProgressLookup(scene: Phaser.Scene, width: number, height: number): ProgressLookup {
-  const columns = Math.ceil(width / TILE_SIZE);
-  const rows = Math.ceil(height / TILE_SIZE);
-  const texture = scene.textures.get(TRANSITION_SOURCE_MASK_TEXTURE);
-  const source = texture.getSourceImage() as CanvasImageSource & { width: number; height: number };
-  const canvas = document.createElement('canvas');
-  canvas.width = source.width;
-  canvas.height = source.height;
-  const context = canvas.getContext('2d');
-  if (!context) throw new Error('Could not read transition progress texture.');
-  context.drawImage(source, 0, 0);
-  const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
-  const values = new Float32Array(columns * rows);
-
-  for (let row = 0; row < rows; row += 1) {
-    for (let column = 0; column < columns; column += 1) {
-      const u = columns <= 1 ? 0.5 : column / (columns - 1);
-      const v = rows <= 1 ? 0.5 : row / (rows - 1);
-      const x = Math.min(canvas.width - 1, Math.max(0, Math.round(u * (canvas.width - 1))));
-      const y = Math.min(canvas.height - 1, Math.max(0, Math.round(v * (canvas.height - 1))));
-      values[row * columns + column] = pixels[(y * canvas.width + x) * 4] / 255;
-    }
-  }
-
-  return { columns, rows, values };
-}
-
-function drawHardMaskSquare(
-  pixels: Uint8ClampedArray,
-  width: number,
-  height: number,
-  centerX: number,
-  centerY: number,
-  halfSize: number,
-  angle: number,
-): void {
-  const radius = Math.ceil(halfSize * Math.SQRT2) + 1;
-  const minX = Math.max(0, Math.floor(centerX - radius));
-  const maxX = Math.min(width - 1, Math.ceil(centerX + radius));
-  const minY = Math.max(0, Math.floor(centerY - radius));
-  const maxY = Math.min(height - 1, Math.ceil(centerY + radius));
-  const cos = Math.cos(angle);
-  const sin = Math.sin(angle);
-
-  for (let y = minY; y <= maxY; y += 1) {
-    for (let x = minX; x <= maxX; x += 1) {
-      const dx = x + 0.5 - centerX;
-      const dy = y + 0.5 - centerY;
-      const localX = dx * cos + dy * sin;
-      const localY = -dx * sin + dy * cos;
-      if (Math.abs(localX) > halfSize || Math.abs(localY) > halfSize) continue;
-      const offset = (y * width + x) * 4;
-      pixels[offset] = 0;
-      pixels[offset + 1] = 0;
-      pixels[offset + 2] = 0;
-      pixels[offset + 3] = 255;
-    }
-  }
-}
-
-function easeInOutCubic(value: number): number {
-  return value < 0.5
-    ? 4 * value * value * value
-    : 1 - Math.pow(-2 * value + 2, 3) / 2;
-}
-
-function clamp01(value: number): number {
-  return Math.min(1, Math.max(0, value));
+function transitionShader(): Phaser.Display.BaseShader {
+  return new Phaser.Display.BaseShader(
+    TRANSITION_SHADER_KEY,
+    transitionFragmentShader,
+    undefined,
+    {
+      progress: { type: '1f', value: 0 },
+    },
+  );
 }

@@ -56,4 +56,4 @@ Maps must have equal row widths, a closed wall perimeter, exactly one of each ch
 
 ## Transition texture
 
-The scene transition uses `public/assets/fx/transition-mask.png` as a grayscale 0..1 transition mask. Each 32px grid cell stores a hard, uniform reveal-order value. At runtime Phaser samples it into a screen-sized `CanvasTexture` mask, then updates that mask as hard 0/1 alpha while grid squares rotate and shrink.
+The scene transition uses `public/assets/fx/transition-mask.png` as a grayscale 0..1 transition mask. Each 32px grid cell stores a hard, uniform reveal-order value. At runtime a Phaser Shader Game Object samples that mask from `iChannel0`; the CPU only animates a single `progress` uniform from 0 to 1.
