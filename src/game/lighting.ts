@@ -1,4 +1,4 @@
-import { chebyshevDistance, pointKey } from './geometry';
+import { pointKey } from './geometry';
 import type { GameState, LevelDefinition, Point } from './types';
 
 const ACTOR_HIT_RADIUS = 0.25;
@@ -24,7 +24,7 @@ export function allLightSources(level: LevelDefinition, state: GameState): Point
 }
 
 export function isDarkActorNearLight(level: LevelDefinition, state: GameState): boolean {
-  return allLightSources(level, state).some((source) => chebyshevDistance(source, state.actors.dark) <= 1);
+  return allLightSources(level, state).some((source) => manhattanDistance(source, state.actors.dark) <= 1);
 }
 
 export function isStateSafe(level: LevelDefinition, state: GameState): boolean {
@@ -61,6 +61,10 @@ function createActorCircleSamples(): WorldPoint[] {
     }
   }
   return samples;
+}
+
+function manhattanDistance(a: Point, b: Point): number {
+  return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
 }
 
 function isWorldPointLit(level: LevelDefinition, state: GameState, target: WorldPoint): boolean {

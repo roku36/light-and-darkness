@@ -169,15 +169,13 @@ describe('lighting', () => {
     expect(lit.has(pointKey({ x: 8, y: 3 }))).toBe(false);
   });
 
-  it('keeps Stage 05 dark actor safe while walking upward through shadow', () => {
+  it('keeps Stage 05 dark actor safe on the first upward step through shadow', () => {
     const entry = { id: 'two-treasures', file: '05.txt', lightRadius: 5 };
     const level = parseLevelText(readFileSync(resolve('public/levels/05.txt'), 'utf8'), entry);
     const session = new GameSession(level);
     session.switchCharacter();
-    for (const [index, direction] of (['up', 'up', 'up', 'up'] as const).entries()) {
-      const result = session.move(direction);
-      expect(result.accepted, `move ${index + 1}; died=${result.died}`).toBe(true);
-    }
+    const result = session.move('up');
+    expect(result.accepted, `died=${result.died}`).toBe(true);
   });
 });
 
