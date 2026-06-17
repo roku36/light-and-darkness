@@ -328,6 +328,7 @@ function titleLevelDefinition(layout: TitleRenderLayout): LevelDefinition {
     id: 'title',
     name: 'Title',
     lightRadius: 999,
+    displayScale: TITLE_SCALE,
     width: layout.width,
     height: layout.height,
     walls: layout.walls,

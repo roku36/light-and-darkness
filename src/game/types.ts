@@ -14,6 +14,7 @@ export interface LevelDefinition {
   id: string;
   name: string;
   lightRadius: number;
+  displayScale: number;
   width: number;
   height: number;
   walls: Point[];

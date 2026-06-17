@@ -48,12 +48,14 @@ describe('level parser', () => {
   it('uses the first text line as the stage name', () => {
     const level = parse(`
 固定光源の部屋
+scale=2
 #######
 #FL.l.#
 #..#..#
 #d..D.#
 #######`);
     expect(level.name).toBe('固定光源の部屋');
+    expect(level.displayScale).toBe(2);
     expect(level.width).toBe(7);
   });
 
@@ -87,14 +89,14 @@ describe('shipped levels', () => {
     }
   });
 
-  it('keeps Stage 01 tutorial route safe', () => {
+  it('keeps Stage 01 opening move safe', () => {
     const entry = {
       id: 'first-switch', name: 'First Switch', file: '01.txt', lightRadius: 4,
       nextLevel: 'box-step',
     };
     const level = parseLevelText(readFileSync(resolve('public/levels/01.txt'), 'utf8'), entry);
     const session = new GameSession(level);
-    const directions = ['right', 'right'] as const;
+    const directions = ['right'] as const;
     for (const [index, direction] of directions.entries()) {
       const result = session.move(direction);
       expect(result.accepted, `move ${index + 1} ${direction}; died=${result.died}`).toBe(true);

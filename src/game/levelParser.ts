@@ -5,6 +5,7 @@ export interface LevelMetadata {
   id: string;
   name?: string;
   lightRadius: number;
+  displayScale?: number;
   nextLevel?: string;
   tutorial?: string;
 }
@@ -20,6 +21,7 @@ export function parseLevelText(text: string, metadata: LevelMetadata): LevelDefi
   if (!Number.isInteger(metadata.lightRadius) || metadata.lightRadius < 1) {
     throw new Error('lightRadius must be a positive integer.');
   }
+  const displayScale = parseDisplayScale(document.settings, metadata.displayScale);
 
   const walls: Point[] = [];
   const crates: Point[] = [];
@@ -62,6 +64,7 @@ export function parseLevelText(text: string, metadata: LevelMetadata): LevelDefi
   return {
     ...metadata,
     name: document.title ?? metadata.name ?? metadata.id,
+    displayScale,
     width,
     height: rows.length,
     walls,
@@ -77,20 +80,50 @@ export function parseLevelTitle(text: string): string | undefined {
   return parseLevelDocument(text).title;
 }
 
-function parseLevelDocument(text: string): { title?: string; body: string } {
-  const lines = text.trim().split(/\r?\n/);
-  const titleIndex = lines.findIndex((line) => {
-    const trimmed = line.trim();
-    return trimmed.length > 0 && !trimmed.startsWith('//');
-  });
-  if (titleIndex < 0) return { body: text };
+function parseDisplayScale(settings: Map<string, string>, fallback?: number): number {
+  const raw = settings.get('scale') ?? settings.get('displayScale') ?? settings.get('display-scale');
+  const displayScale = raw === undefined ? fallback ?? 1 : Number(raw);
+  if (!Number.isInteger(displayScale) || displayScale < 1) {
+    throw new Error('scale must be a positive integer.');
+  }
+  return displayScale;
+}
 
-  const firstContentLine = lines[titleIndex].trim();
-  if (isMapRow(firstContentLine)) return { body: text };
+function parseLevelDocument(text: string): { title?: string; settings: Map<string, string>; body: string } {
+  const lines = text.trim().split(/\r?\n/);
+  let cursor = 0;
+  while (cursor < lines.length && isIgnorableHeaderLine(lines[cursor])) cursor += 1;
+  if (cursor >= lines.length) return { settings: new Map(), body: text };
+
+  const firstContentLine = lines[cursor].trim();
+  if (isMapRow(firstContentLine)) return { settings: new Map(), body: text };
+
+  const title = firstContentLine;
+  cursor += 1;
+  const settings = new Map<string, string>();
+  while (cursor < lines.length) {
+    const trimmed = lines[cursor].trim();
+    if (trimmed.length === 0 || trimmed.startsWith('//')) {
+      cursor += 1;
+      continue;
+    }
+    if (isMapRow(trimmed)) break;
+    const match = /^([A-Za-z][A-Za-z0-9_-]*)\s*=\s*(.+)$/.exec(trimmed);
+    if (!match) throw new Error(`Unknown level header "${trimmed}".`);
+    settings.set(match[1], match[2].trim());
+    cursor += 1;
+  }
+
   return {
-    title: firstContentLine,
-    body: lines.slice(titleIndex + 1).join('\n'),
+    title,
+    settings,
+    body: lines.slice(cursor).join('\n'),
   };
+}
+
+function isIgnorableHeaderLine(line: string): boolean {
+  const trimmed = line.trim();
+  return trimmed.length === 0 || trimmed.startsWith('//');
 }
 
 function parseRows(text: string): string[][] {

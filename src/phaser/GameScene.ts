@@ -431,12 +431,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   private layoutBoard(): void {
-    const availableWidth = this.scale.width - 32;
-    const availableHeight = this.scale.height - 32;
     const boardWidth = this.level.width * TILE;
     const boardHeight = this.level.height * TILE;
-    const integerScale = Math.max(1, Math.floor(Math.min(availableWidth / boardWidth, availableHeight / boardHeight)));
-    const scale = Math.min(integerScale, 2);
+    const scale = this.level.displayScale;
     this.world.setScale(scale);
     this.world.setPosition(
       alignToScale((this.scale.width - boardWidth * scale) / 2, scale),
