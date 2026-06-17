@@ -13,11 +13,9 @@ const parse = (text: string, radius = 3) => parseLevelText(text, {
 describe('level parser', () => {
   it('parses required entities', () => {
     const level = parse(`
-#######
-#SL.l.#
-#..#..#
-#d..D.#
-#######`);
+SL.l.
+..#..
+d..D.`);
     expect(level.width).toBe(7);
     expect(level.actors.light).toEqual({ x: 2, y: 1 });
     expect(level.goals.dark).toEqual({ x: 1, y: 3 });
@@ -59,15 +57,17 @@ scale=2
     expect(level.width).toBe(7);
   });
 
-  it('rejects open perimeters and unknown tokens', () => {
+  it('adds a closed wall perimeter automatically and rejects unknown tokens', () => {
+    const level = parse(`
+.SLl
+dD..`);
+    expect(level.width).toBe(6);
+    expect(level.height).toBe(4);
+    expect(level.walls).toContainEqual({ x: 0, y: 0 });
+    expect(level.walls).toContainEqual({ x: 5, y: 3 });
     expect(() => parse(`
 #####
-.SLl#
-#dD.#
-#####`)).toThrow(/perimeter/i);
-    expect(() => parse(`
-#####
-#SLX#
+#SLQ#
 #dDl#
 #####`)).toThrow(/Unknown token/);
   });

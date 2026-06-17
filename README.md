@@ -28,23 +28,21 @@ Desktop packaging and regeneration notes are in [docs/desktop-build.md](docs/des
 
 Stages live in `public/levels`. Use numeric file names such as `01.txt`, `02.txt`, and add each file to `index.json` with an ID and light radius.
 
-The first non-empty line is the Japanese stage name. Header lines such as `scale=2` can follow before the map rows. `scale` is the explicit integer display scale for that stage; the game scene does not choose it automatically. After the header, each non-empty line is one row and each character is one tile. Lines beginning with `//` are ignored, so stage files can carry short comments. The parser still accepts old comma-separated rows, but the shipped stages use the compact `.txt` format.
+The first non-empty line is the Japanese stage name. Header lines such as `scale=2` can follow before the map rows. `scale` is the explicit integer display scale for that stage; the game scene does not choose it automatically. After the header, each non-empty line is one row and each character is one tile. Lines beginning with `//` are ignored, so stage files can carry short comments. The parser automatically adds the mandatory outer wall perimeter, so stage files should not include the outside `#` border. The parser still accepts old comma-separated rows and legacy files with an outer wall border, but the shipped stages use the compact `.txt` format.
 
 ```txt
 はじめの切替
 scale=1
-#########
-#S.LBl..#
-####..###
-#...#Dd.#
-#...#...#
-#.......#
-#########
+S.LBl..
+###..##
+...#Dd.
+...#...
+.......
 ```
 
 | Token | Meaning |
 | --- | --- |
-| `#` | wall |
+| `#` / `X` | wall |
 | `.` | floor |
 | `L` / `D` | light / dark character |
 | `B` | crate |
@@ -52,7 +50,7 @@ scale=1
 | `F` | fixed light source |
 | `l` / `d` | light / dark treasure |
 
-Maps must have equal row widths, a closed wall perimeter, exactly one of each character and treasure, and one connected floor region.
+Maps must have equal row widths, exactly one of each character and treasure, and one connected floor region. The outside wall perimeter is generated automatically.
 
 ## Transition texture
 

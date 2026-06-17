@@ -10,14 +10,17 @@ export interface LevelMetadata {
   tutorial?: string;
 }
 
-const TOKENS = new Set(['#', '.', 'L', 'D', 'B', 'S', 'F', 'l', 'd']);
+const TOKENS = new Set(['#', 'X', '.', 'L', 'D', 'B', 'S', 'F', 'l', 'd']);
+const WALL_TOKENS = new Set(['#', 'X']);
 
 export function parseLevelText(text: string, metadata: LevelMetadata): LevelDefinition {
   const document = parseLevelDocument(text);
-  const rows = parseRows(document.body);
-  if (rows.length < 3 || rows[0].length < 3) throw new Error('Level must be at least 3x3.');
+  const sourceRows = parseRows(document.body);
+  if (sourceRows.length < 1 || sourceRows[0].length < 1) throw new Error('Level must contain at least one map cell.');
+  const sourceWidth = sourceRows[0].length;
+  if (sourceRows.some((row) => row.length !== sourceWidth)) throw new Error('Level rows must have equal width.');
+  const rows = withAutomaticPerimeter(stripLegacyPerimeter(sourceRows));
   const width = rows[0].length;
-  if (rows.some((row) => row.length !== width)) throw new Error('Level rows must have equal width.');
   if (!Number.isInteger(metadata.lightRadius) || metadata.lightRadius < 1) {
     throw new Error('lightRadius must be a positive integer.');
   }
@@ -33,7 +36,7 @@ export function parseLevelText(text: string, metadata: LevelMetadata): LevelDefi
   rows.forEach((row, y) => row.forEach((token, x) => {
     if (!TOKENS.has(token)) throw new Error(`Unknown token "${token}" at row ${y + 1}, column ${x + 1}.`);
     const point = { x, y };
-    if (token === '#') walls.push(point);
+    if (WALL_TOKENS.has(token)) walls.push(point);
     if (token === 'B') crates.push(point);
     if (token === 'S') lights.push(point);
     if (token === 'F') fixedLights.push(point);
@@ -49,12 +52,6 @@ export function parseLevelText(text: string, metadata: LevelMetadata): LevelDefi
     }
   }));
 
-  for (let x = 0; x < width; x += 1) {
-    if (rows[0][x] !== '#' || rows[rows.length - 1][x] !== '#') throw new Error('Level perimeter must be closed by walls.');
-  }
-  for (let y = 0; y < rows.length; y += 1) {
-    if (rows[y][0] !== '#' || rows[y][width - 1] !== '#') throw new Error('Level perimeter must be closed by walls.');
-  }
   if (!actors.light || !actors.dark || !goals.light || !goals.dark) {
     throw new Error('Level requires L, D, l, and d exactly once.');
   }
@@ -133,6 +130,31 @@ function parseRows(text: string): string[][] {
     .map((line) => line.trim())
     .filter((line) => line.length > 0 && !line.startsWith('//'))
     .map((line) => (line.includes(',') ? line.split(',').map((cell) => cell.trim()) : [...line]));
+}
+
+function stripLegacyPerimeter(rows: string[][]): string[][] {
+  if (rows.length < 3 || rows[0].length < 3 || !hasClosedPerimeter(rows)) return rows;
+  return rows.slice(1, -1).map((row) => row.slice(1, -1));
+}
+
+function hasClosedPerimeter(rows: string[][]): boolean {
+  const width = rows[0].length;
+  for (let x = 0; x < width; x += 1) {
+    if (!WALL_TOKENS.has(rows[0][x]) || !WALL_TOKENS.has(rows[rows.length - 1][x])) return false;
+  }
+  for (let y = 0; y < rows.length; y += 1) {
+    if (!WALL_TOKENS.has(rows[y][0]) || !WALL_TOKENS.has(rows[y][width - 1])) return false;
+  }
+  return true;
+}
+
+function withAutomaticPerimeter(rows: string[][]): string[][] {
+  const width = rows[0].length;
+  return [
+    Array.from({ length: width + 2 }, () => '#'),
+    ...rows.map((row) => ['#', ...row, '#']),
+    Array.from({ length: width + 2 }, () => '#'),
+  ];
 }
 
 function isMapRow(line: string): boolean {

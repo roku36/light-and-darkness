@@ -30,6 +30,8 @@ const LIGHT_SOURCE_FRAMES = 6;
 const LIGHT_SOURCE_FRAME_RATE = 10;
 const TREASURE_FRAMES = 2;
 const TREASURE_FRAME_RATE = 2;
+const OUTER_WALL_FADE_PIXELS = TILE / 2;
+const OUTER_WALL_FADE_ALPHA = 0.92;
 
 type FacingDirection = 'left' | 'right';
 
@@ -282,6 +284,7 @@ export class GameScene extends Phaser.Scene {
     this.level.goals.light && this.drawGoal(this.level.goals.light, 'light');
     this.level.goals.dark && this.drawGoal(this.level.goals.dark, 'dark');
     this.level.walls.forEach((point) => this.drawWall(point));
+    this.drawOuterWallFade();
     state.crates.forEach((point) => this.drawCrate(point));
     this.level.fixedLights.forEach((point) => this.drawLight(point, true));
     state.lights.forEach((point) => this.drawLight(point, false));
@@ -323,6 +326,22 @@ export class GameScene extends Phaser.Scene {
 
   private drawWall(point: Point): void {
     this.drawStaticSprite(point, SPRITE_TEXTURES.wall);
+  }
+
+  private drawOuterWallFade(): void {
+    const graphics = this.add.graphics();
+    for (let step = 0; step < OUTER_WALL_FADE_PIXELS; step += 1) {
+      graphics.fillStyle(0x000000, OUTER_WALL_FADE_ALPHA * (1 - step / OUTER_WALL_FADE_PIXELS));
+      this.level.walls.forEach((point) => {
+        const x = point.x * TILE;
+        const y = point.y * TILE;
+        if (point.y === 0) graphics.fillRect(x, y + step, TILE, 1);
+        if (point.y === this.level.height - 1) graphics.fillRect(x, y + TILE - 1 - step, TILE, 1);
+        if (point.x === 0) graphics.fillRect(x + step, y, 1, TILE);
+        if (point.x === this.level.width - 1) graphics.fillRect(x + TILE - 1 - step, y, 1, TILE);
+      });
+    }
+    this.board.add(graphics);
   }
 
   private drawCrate(point: Point): void {
