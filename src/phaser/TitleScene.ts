@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import type { GameState, LevelDefinition, Point } from '../game/types';
 import { createLightMap, updateLightMap } from './visualLighting';
 import { ensureSpriteAnimations, preloadSpriteSheets, SPRITE_ANIMATIONS, SPRITE_TEXTURES } from './spriteSheets';
+import { playGridTransition } from './sceneTransition';
 
 const TILE = 48;
 const TITLE_SCALE = 3;
@@ -15,7 +16,6 @@ const LIGHT_LOGO_ROW = 2;
 const DARK_LOGO_ROW = 4;
 const TITLE_LOGO_LIGHT = 'title-logo-light';
 const TITLE_LOGO_DARK = 'title-logo-dark';
-const SHARED_LIGHT_TEXTURE_KEY = 'board-floor-luminance';
 const BUTTON_WIDTH = 34;
 const BUTTON_HEIGHT = 22;
 const BUTTON_HOVER_SCALE = 1.14;
@@ -76,6 +76,7 @@ export class TitleScene extends Phaser.Scene {
   private onResetProgress!: () => void;
   private keys!: Record<string, Phaser.Input.Keyboard.Key>;
   private started = false;
+  private transitionLocked = false;
   private titleButtons: TitleButtonState[] = [];
   private hoveredButtonIndex: number | null = null;
 
@@ -91,6 +92,7 @@ export class TitleScene extends Phaser.Scene {
     this.onStartLevel = data.onStartLevel;
     this.onResetProgress = data.onResetProgress;
     this.started = false;
+    this.transitionLocked = false;
   }
 
   preload(): void {
@@ -118,6 +120,10 @@ export class TitleScene extends Phaser.Scene {
     });
     this.scale.on('resize', this.renderTitle, this);
     this.renderTitle();
+    this.transitionLocked = true;
+    void playGridTransition(this).then(() => {
+      this.transitionLocked = false;
+    });
   }
 
   update(time: number): void {
@@ -140,7 +146,6 @@ export class TitleScene extends Phaser.Scene {
     this.board.removeAll(true);
     this.titleButtons = [];
     this.hoveredButtonIndex = null;
-    this.textures.remove(SHARED_LIGHT_TEXTURE_KEY);
     this.renderLayout = createFullscreenLayout(this.layout, this.scale.width, this.scale.height);
     this.titleLevel = titleLevelDefinition(this.renderLayout);
     this.titleState = titleGameState(this.titleLevel);
@@ -257,7 +262,7 @@ export class TitleScene extends Phaser.Scene {
   }
 
   private startLevel(index: number): void {
-    if (this.started) return;
+    if (this.started || this.transitionLocked) return;
     this.started = true;
     this.input.setDefaultCursor('default');
     this.onStartLevel(index);

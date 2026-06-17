@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "光と影の宝",
-  "version": "0.1.0",
+  "productName": "Light and Darkness Treasure",
+  "version": "0.1.1",
   "identifier": "com.roku.light-and-darkness",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "光の中の宝 / 影の中の宝",
+        "title": "Light and Darkness Treasure",
         "fullscreen": true,
         "decorations": false,
         "resizable": false,

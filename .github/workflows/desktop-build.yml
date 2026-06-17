@@ -32,8 +32,12 @@ jobs:
       - name: Build .app
         run: npm run desktop:build:mac
 
+      - name: Verify .app signature
+        run: |
+          codesign --verify --deep --strict --verbose=2 "src-tauri/target/release/bundle/macos/Light and Darkness Treasure.app"
+
       - name: Archive .app
-        run: ditto -c -k --sequesterRsrc --keepParent "src-tauri/target/release/bundle/macos/光と影の宝.app" "light-and-darkness-macos-app.zip"
+        run: ditto -c -k --sequesterRsrc --keepParent "src-tauri/target/release/bundle/macos/Light and Darkness Treasure.app" "light-and-darkness-macos-app.zip"
 
       - uses: actions/upload-artifact@v4
         with:

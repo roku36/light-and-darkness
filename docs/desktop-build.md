@@ -33,7 +33,7 @@ npm run desktop:build:mac
 This project is configured to produce only:
 
 ```txt
-src-tauri/target/release/bundle/macos/光と影の宝.app
+src-tauri/target/release/bundle/macos/Light and Darkness Treasure.app
 ```
 
 It does not produce a `.dmg`.
@@ -71,7 +71,7 @@ The portable `.exe` assumes the target PC already has Microsoft WebView2 Runtime
 
 The workflow at `.github/workflows/desktop-build.yml` can be started manually from GitHub Actions. It builds:
 
-- macOS: `光と影の宝.app`, uploaded as a zip artifact
+- macOS: `Light and Darkness Treasure.app`, uploaded as a zip artifact
 - Windows: `light-and-darkness.exe` and the NSIS `*-setup.exe`, uploaded as artifacts
 
 When a `v*` tag is pushed, the same workflow also creates or updates the GitHub Release for that tag and attaches:
@@ -83,8 +83,8 @@ When a `v*` tag is pushed, the same workflow also creates or updates the GitHub 
 Release command:
 
 ```sh
-git tag v0.1.0
-git push origin main v0.1.0
+git tag v0.1.1
+git push origin main v0.1.1
 ```
 
 This is the closest Tauri equivalent to a one-shot multi-platform export: each platform is built on its native runner, then the artifacts are collected on the GitHub Release.
