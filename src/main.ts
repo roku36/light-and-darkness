@@ -25,6 +25,7 @@ const stageSelect = requiredElement<HTMLSelectElement>('stage-select');
 const tutorialLabel = requiredElement<HTMLDivElement>('tutorial-label');
 const message = requiredElement<HTMLDivElement>('message');
 const gameRoot = requiredElement<HTMLDivElement>('game');
+const stageHelp = requiredElement<HTMLDivElement>('stage-help');
 
 let game: Phaser.Game | undefined;
 let levels: LevelIndexEntry[] = [];
@@ -67,6 +68,8 @@ async function showTitle(): Promise<void> {
   movesLabel.textContent = '';
   actorLabel.textContent = '';
   delete actorLabel.dataset.actor;
+  stageHelp.hidden = true;
+  stageHelp.textContent = '';
   tutorialLabel.textContent = 'SPACE / ENTER / CLICK START';
   stageSelect.value = levels[currentIndex]?.id ?? '';
   const source = await loadTitleSource();
@@ -101,6 +104,8 @@ async function mountLevel(index: number, level: LevelDefinition, source: string)
   stageSelect.value = entry.id;
   stageLabel.textContent = level.name;
   escapeLabel.textContent = 'Esc: タイトルに戻る';
+  stageHelp.hidden = false;
+  stageHelp.textContent = 'WASD:上下左右移動\n SPACE: 操作対象切替';
   tutorialLabel.textContent = entry.tutorial ?? '';
 
   createPhaserGame((bootedGame) => {

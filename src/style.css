@@ -85,6 +85,24 @@ h1 { margin: 0; font-size: clamp(18px, 2.4vw, 30px); letter-spacing: -0.04em; tr
   animation: undo-blink 700ms steps(2, end) infinite;
 }
 
+.stage-help {
+  position: absolute;
+  right: 18px;
+  bottom: 16px;
+  z-index: 3;
+  color: var(--game-light-color);
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  line-height: 1.45;
+  white-space: pre-line;
+  pointer-events: none;
+}
+
+.stage-help[hidden] {
+  display: none;
+}
+
 @keyframes undo-blink {
   50% { opacity: 0.45; }
 }
