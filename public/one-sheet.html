@@ -6,10 +6,10 @@
   <title>光の中の宝 / 影の中の宝 企画書</title>
   <style>
     :root {
-      --light-color: #f7f7f2;
-      --shadow-color: #333333;
-      --thin: 2px solid var(--shadow-color);
-      --thick: 6px solid var(--shadow-color);
+      --paper: #f7f7f2;
+      --ink: #050505;
+      --thin: 2px solid #050505;
+      --thick: 6px solid #050505;
       --sheet-w: 1600px;
       --sheet-h: 900px;
     }
@@ -21,8 +21,8 @@
       width: 100%;
       height: 100%;
       margin: 0;
-      background: var(--light-color);
-      color: var(--shadow-color);
+      background: #d8d8d0;
+      color: var(--ink);
       font-family:
         "Hiragino Sans",
         "Yu Gothic",
@@ -46,8 +46,8 @@
       overflow: hidden;
       transform: translate(-50%, -50%) scale(var(--fit-scale, 1));
       transform-origin: center;
-      background: var(--light-color);
-      box-shadow: 0 18px 60px color-mix(in srgb, var(--shadow-color) 28%, transparent);
+      background: var(--paper);
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.28);
     }
 
     .sheet::before {
@@ -55,8 +55,8 @@
       position: absolute;
       inset: 0;
       background:
-        linear-gradient(90deg, color-mix(in srgb, var(--shadow-color) 7%, transparent) 1px, transparent 1px),
-        linear-gradient(color-mix(in srgb, var(--shadow-color) 7%, transparent) 1px, transparent 1px);
+        linear-gradient(90deg, rgba(0, 0, 0, 0.045) 1px, transparent 1px),
+        linear-gradient(rgba(0, 0, 0, 0.045) 1px, transparent 1px);
       background-size: 40px 40px;
       pointer-events: none;
     }
@@ -121,7 +121,7 @@
       margin: 18px 0 0;
       padding: 13px 16px;
       border: var(--thin);
-      background: var(--light-color);
+      background: rgba(255, 255, 255, 0.72);
       font-size: 20px;
       line-height: 1.45;
       font-weight: 800;
@@ -138,8 +138,8 @@
 
     .screen-frame {
       margin: 0;
-      border: 6px solid var(--shadow-color);
-      background: var(--shadow-color);
+      border: 6px solid #000;
+      background: #000;
       overflow: hidden;
     }
 
@@ -169,7 +169,7 @@
     .card {
       min-height: 0;
       border: var(--thin);
-      background: var(--light-color);
+      background: rgba(255, 255, 255, 0.76);
       padding: 12px 14px;
       display: grid;
       grid-template-rows: auto 76px 1fr;
@@ -191,11 +191,11 @@
       gap: 14px;
       min-height: 76px;
       background:
-        linear-gradient(90deg, color-mix(in srgb, var(--shadow-color) 10%, transparent) 1px, transparent 1px),
-        linear-gradient(color-mix(in srgb, var(--shadow-color) 10%, transparent) 1px, transparent 1px),
-        var(--light-color);
+        linear-gradient(90deg, rgba(0, 0, 0, 0.08) 1px, transparent 1px),
+        linear-gradient(rgba(0, 0, 0, 0.08) 1px, transparent 1px),
+        #fdfdf8;
       background-size: 28px 28px;
-      border: 2px solid var(--shadow-color);
+      border: 2px solid #000;
     }
 
     .diagram.duo {
@@ -235,17 +235,17 @@
     .symbol {
       min-width: 74px;
       padding: 7px 10px;
-      border: 2px solid var(--shadow-color);
+      border: 2px solid #000;
       text-align: center;
       font-size: 21px;
       line-height: 1.1;
       font-weight: 900;
-      background: var(--light-color);
+      background: #fff;
     }
 
-    .symbol.shadow {
-      background: var(--shadow-color);
-      color: var(--light-color);
+    .symbol.black {
+      background: #000;
+      color: #fff;
     }
 
     .card p {
@@ -262,7 +262,7 @@
       justify-content: space-between;
       align-items: center;
       padding-top: 9px;
-      border-top: 3px solid var(--shadow-color);
+      border-top: 3px solid #000;
       font-size: 18px;
       font-weight: 850;
       letter-spacing: 0.03em;
@@ -272,8 +272,8 @@
       display: inline-block;
       margin: 0 6px;
       padding: 3px 9px 4px;
-      background: var(--shadow-color);
-      color: var(--light-color);
+      background: #000;
+      color: #fff;
       font-weight: 900;
     }
 
@@ -283,7 +283,7 @@
         margin: 0;
       }
 
-      body { background: var(--light-color); }
+      body { background: #fff; }
 
       .sheet {
         width: 16in;
@@ -352,7 +352,7 @@
             <span class="sprite light" aria-label="光側の人"></span>
             <span class="symbol">光</span>
             <span class="sprite dark" aria-label="影側の人"></span>
-            <span class="symbol shadow">影</span>
+            <span class="symbol black">影</span>
           </div>
           <p>光側は光の中、影側は影の中でだけ安全。移動前にどのマスが安全か読む。</p>
         </article>
