@@ -312,10 +312,10 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private burstActor(point: Point, _kind: ActorKind): void {
+  private burstActor(point: Point, kind: ActorKind): void {
     const centerX = (point.x + 0.5) * TILE;
     const centerY = (point.y + 0.5) * TILE;
-    const color = LIGHT_COLOR.value;
+    const color = kind === 'light' ? LIGHT_COLOR.value : SHADOW_COLOR.value;
     for (let index = 0; index < 22; index += 1) {
       const size = 2 + (index % 3) * 2;
       const particle = this.add.rectangle(centerX, centerY, size, size, color);
