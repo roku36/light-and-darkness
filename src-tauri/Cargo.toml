@@ -1,6 +1,6 @@
 [package]
 name = "light-and-darkness"
-version = "0.1.1"
+version = "0.1.2"
 description = "A fullscreen light and shadow puzzle game."
 authors = ["Roku"]
 edition = "2021"

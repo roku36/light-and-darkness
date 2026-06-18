@@ -1,37 +1,37 @@
 # Level Solutions
 
-These are the intended tutorial beats and verification routes for the five shipped stages.
+These are the verification routes for the five shipped stages.
 
 Input notation:
 - `R/L/U/D`: move right, left, up, down.
 - `SW`: press Space to switch the active actor.
 
-## Stage 01: First Switch
+## Stage 01: 最初の部屋
 
-Purpose: Teach that the two characters are moved separately, while still requiring a box push.
+Purpose: Verify basic switching and simultaneous treasure completion.
 
-Solution: `R R SW R`
+Solution: `U U U U SW D D D D`
 
-## Stage 02: Box Step
+## Stage 02: ふたつの木箱
 
-Purpose: Teach pushing a wooden box as part of normal movement.
+Purpose: Verify crate pushing in the current second stage.
 
-Solution: `U U SW R R`
+Solution: `R R R D D SW L L L L D SW R R D D D L`
 
-## Stage 03: Lamp Push
+## Stage 03: 開放
 
-Purpose: Teach that only the light actor can push the light source.
+Purpose: Verify the compact crate layout.
 
-Solution: `L L SW R R`
+Solution: `D L SW D D R R R U R U R SW L U L D L`
 
-## Stage 04: Make Shadow
+## Stage 04: 急がば回れ
 
-Purpose: Teach that a pushed box can keep the dark actor safe by blocking light.
+Purpose: Verify the longer light-source route.
 
-Solution: `R R SW R R`
+Solution: `D L L L L D L L U R R R R U R D SW R U R U U U SW D D L L L SW R U`
 
-## Stage 05: Two Treasures
+## Stage 05: 橋渡し
 
 Purpose: Combine light-source movement, box shadowing, switching, and simultaneous treasure completion.
 
-Solution: `L L R R D D D R U L U U L L SW U U`
+Solution: `R R R U L SW U R R R SW D L L U R R R R SW R SW D D L D D L L L SW R U U R U R`
