@@ -1,9 +1,9 @@
 :root {
-  color: #fff;
-  background: #000;
+  color: var(--game-light-color);
+  background: var(--game-shadow-color);
   font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
   font-synthesis: none;
-  --line: 2px solid #fff;
+  --line: 2px solid var(--game-light-color);
 }
 
 * { box-sizing: border-box; }
@@ -11,13 +11,13 @@
 html, body, #app { width: 100%; height: 100%; margin: 0; overflow: hidden; }
 
 body {
-  background-color: #000;
+  background-color: var(--game-shadow-color);
 }
 
 #app {
   display: block;
   padding: 0;
-  background: #000;
+  background: var(--game-shadow-color);
 }
 
 .controls {
@@ -33,7 +33,7 @@ body {
   display: flex;
   justify-content: space-between;
   gap: 24px;
-  color: #fff;
+  color: var(--game-light-color);
   font-size: 18px;
   font-weight: 900;
   letter-spacing: 0.08em;
@@ -49,8 +49,8 @@ main {
 
 h1 { margin: 0; font-size: clamp(18px, 2.4vw, 30px); letter-spacing: -0.04em; transform: scaleX(0.84); transform-origin: left; }
 .status { display: flex; align-items: center; gap: clamp(16px, 3vw, 42px); }
-.actor-label { min-width: 72px; border: 1px solid #fff; padding: 7px 9px; text-align: center; }
-.actor-label[data-actor="light"] { color: #000; background: #fff; }
+.actor-label { min-width: 72px; border: 1px solid var(--game-light-color); padding: 7px 9px; text-align: center; }
+.actor-label[data-actor="light"] { color: var(--game-shadow-color); background: var(--game-light-color); }
 .tutorial-label {
   flex: 0 0 100%;
   max-width: none;
@@ -66,9 +66,9 @@ h1 { margin: 0; font-size: clamp(18px, 2.4vw, 30px); letter-spacing: -0.04em; tr
   left: 50%; top: 50%;
   z-index: 2;
   padding: 14px 20px;
-  border: 3px solid #fff;
-  color: #fff;
-  background: #000;
+  border: 3px solid var(--game-light-color);
+  color: var(--game-light-color);
+  background: var(--game-shadow-color);
   font-weight: 900;
   letter-spacing: 0.12em;
   transform: translate(-50%, -50%) scale(0.92);
@@ -90,9 +90,9 @@ h1 { margin: 0; font-size: clamp(18px, 2.4vw, 30px); letter-spacing: -0.04em; tr
 }
 
 kbd, select {
-  border: 1px solid #fff;
-  color: #fff;
-  background: #000;
+  border: 1px solid var(--game-light-color);
+  color: var(--game-light-color);
+  background: var(--game-shadow-color);
   padding: 4px 6px;
   font: inherit;
   letter-spacing: 0.08em;

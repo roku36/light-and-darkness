@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { allLightSources } from '../game/lighting';
 import type { GameState, LevelDefinition, Point } from '../game/types';
 import { FLAME_HORIZONTAL_OFFSETS } from './flameAnimation';
+import { LIGHT_COLOR, SHADOW_COLOR } from './gameColors';
 import { shadowPolygon, type PixelPoint, type PixelRect } from './shadowGeometry';
 
 const FLOOR_TEXTURE_KEY = 'board-floor-luminance';
@@ -155,10 +156,10 @@ function createVisibilityMask(
   const context = canvas.getContext('2d');
   if (!context) return new Uint8ClampedArray(width * height);
 
-  context.fillStyle = '#fff';
+  context.fillStyle = LIGHT_COLOR.css;
   context.fillRect(0, 0, width, height);
   context.globalCompositeOperation = 'destination-out';
-  context.fillStyle = '#000';
+  context.fillStyle = SHADOW_COLOR.css;
 
   for (const blocker of blockers) {
     if (blocker.x === sourceCell.x && blocker.y === sourceCell.y) continue;

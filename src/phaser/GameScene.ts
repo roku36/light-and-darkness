@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { cloneState, GameSession } from '../game/engine';
 import type { ActorKind, Direction, GameState, LevelDefinition, Point } from '../game/types';
 import { FLAME_HORIZONTAL_OFFSETS } from './flameAnimation';
+import { LIGHT_COLOR, SHADOW_COLOR } from './gameColors';
 import {
   actorAnimationKey,
   actorTextureKey,
@@ -92,7 +93,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.cameras.main.setBackgroundColor('#000000');
+    this.cameras.main.setBackgroundColor(SHADOW_COLOR.css);
     this.world = this.add.container(0, 0);
     this.board = this.add.container(0, 0);
     this.goalEffectLayer = this.add.container(0, 0);
@@ -296,7 +297,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private drawUndoFlash(): void {
-    const flash = this.add.rectangle(0, 0, this.level.width * TILE, this.level.height * TILE, 0xffffff, UNDO_FLASH_ALPHA)
+    const flash = this.add.rectangle(0, 0, this.level.width * TILE, this.level.height * TILE, LIGHT_COLOR.value, UNDO_FLASH_ALPHA)
       .setOrigin(0);
     this.board.add(flash);
   }
@@ -309,10 +310,10 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private burstActor(point: Point, kind: ActorKind): void {
+  private burstActor(point: Point, _kind: ActorKind): void {
     const centerX = (point.x + 0.5) * TILE;
     const centerY = (point.y + 0.5) * TILE;
-    const color = kind === 'light' ? 0xffffff : 0xffffff;
+    const color = LIGHT_COLOR.value;
     for (let index = 0; index < 22; index += 1) {
       const size = 2 + (index % 3) * 2;
       const particle = this.add.rectangle(centerX, centerY, size, size, color);
@@ -340,7 +341,7 @@ export class GameScene extends Phaser.Scene {
   private drawOuterWallFade(): void {
     const graphics = this.add.graphics();
     for (let step = 0; step < OUTER_WALL_FADE_PIXELS; step += 1) {
-      graphics.fillStyle(0x000000, OUTER_WALL_FADE_ALPHA * (1 - step / OUTER_WALL_FADE_PIXELS));
+      graphics.fillStyle(SHADOW_COLOR.value, OUTER_WALL_FADE_ALPHA * (1 - step / OUTER_WALL_FADE_PIXELS));
       this.level.walls.forEach((point) => {
         const x = point.x * TILE;
         const y = point.y * TILE;
@@ -407,7 +408,7 @@ export class GameScene extends Phaser.Scene {
     if (this.goalEffects[kind]) return;
     const centerX = (point.x + 0.5) * TILE;
     const centerY = (point.y + 0.5) * TILE;
-    const color = kind === 'light' ? 0x000000 : 0xffffff;
+    const color = kind === 'light' ? SHADOW_COLOR.value : LIGHT_COLOR.value;
     const container = this.add.container(0, 0);
     this.goalEffectLayer.add(container);
     const emit = () => this.emitGoalParticle(container, centerX, centerY, color);

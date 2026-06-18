@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import type { GameState, LevelDefinition, Point } from '../game/types';
+import { LIGHT_COLOR, SHADOW_COLOR } from './gameColors';
 import { createLightMap, updateLightMap } from './visualLighting';
 import { ensureSpriteAnimations, preloadSpriteSheets, SPRITE_ANIMATIONS, SPRITE_TEXTURES } from './spriteSheets';
 import { playGridTransition, preloadTransitionTexture } from './sceneTransition';
@@ -20,9 +21,9 @@ const BUTTON_WIDTH = 34;
 const BUTTON_HEIGHT = 22;
 const BUTTON_HOVER_SCALE = 1.14;
 const BUTTON_COLORS = {
-  complete: { fill: 0xffffff, stroke: 0xffffff, text: '#000000' },
-  available: { fill: 0x777777, stroke: 0xffffff, text: '#000000' },
-  locked: { fill: 0x222222, stroke: 0x777777, text: '#777777' },
+  complete: { fill: LIGHT_COLOR.value, stroke: LIGHT_COLOR.value, text: SHADOW_COLOR.css },
+  available: { fill: SHADOW_COLOR.value, stroke: LIGHT_COLOR.value, text: LIGHT_COLOR.css },
+  locked: { fill: SHADOW_COLOR.value, stroke: SHADOW_COLOR.value, text: LIGHT_COLOR.css },
 } as const;
 
 interface TitleSceneData {
@@ -103,7 +104,7 @@ export class TitleScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.cameras.main.setBackgroundColor('#000000');
+    this.cameras.main.setBackgroundColor(SHADOW_COLOR.css);
     this.board = this.add.container(0, 0);
     this.board.setPostPipeline('OneBitPipeline');
     ensureSpriteAnimations(this);

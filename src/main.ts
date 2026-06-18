@@ -11,8 +11,11 @@ import { parseLevelText, parseLevelTitle } from './game/levelParser';
 import { loadProgress, resetProgress, saveProgress, type ProgressData } from './game/progress';
 import type { GameState, LevelDefinition } from './game/types';
 import { GameScene } from './phaser/GameScene';
+import { applyGameColorCssVariables, SHADOW_COLOR } from './phaser/gameColors';
 import { OneBitPipeline } from './phaser/OneBitPipeline';
 import { TitleScene } from './phaser/TitleScene';
+
+applyGameColorCssVariables();
 
 const stageLabel = requiredElement<HTMLSpanElement>('stage-label');
 const escapeLabel = requiredElement<HTMLSpanElement>('escape-label');
@@ -138,7 +141,7 @@ function createPhaserGame(startScene: (bootedGame: Phaser.Game) => void): void {
   game = new Phaser.Game({
     type: Phaser.WEBGL,
     parent: 'game',
-    backgroundColor: '#000000',
+    backgroundColor: SHADOW_COLOR.css,
     pixelArt: true,
     antialias: false,
     roundPixels: true,

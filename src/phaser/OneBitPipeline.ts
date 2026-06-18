@@ -1,10 +1,13 @@
 import Phaser from 'phaser';
+import { LIGHT_COLOR, SHADOW_COLOR } from './gameColors';
 
 const fragmentShader = `
 precision mediump float;
 uniform sampler2D uMainSampler;
 uniform vec2 resolution;
 uniform float ditherScale;
+uniform vec3 lightColor;
+uniform vec3 shadowColor;
 varying vec2 outTexCoord;
 
 vec2 blockCoord(vec2 uv) {
@@ -32,7 +35,7 @@ void main() {
   } else {
     bit = fixedDither(block);
   }
-  gl_FragColor = vec4(vec3(bit), color.a);
+  gl_FragColor = vec4(mix(shadowColor, lightColor, bit), color.a);
 }`;
 
 type ScaledGameObject = Phaser.GameObjects.GameObject & { scaleX?: number };
@@ -46,6 +49,8 @@ export class OneBitPipeline extends Phaser.Renderer.WebGL.Pipelines.PostFXPipeli
     const sourceScale = Math.max(1, Math.round((this.gameObject as ScaledGameObject | undefined)?.scaleX ?? 1));
     this.set2f('resolution', target.width, target.height);
     this.set1f('ditherScale', sourceScale);
+    this.set3f('lightColor', LIGHT_COLOR.shader[0], LIGHT_COLOR.shader[1], LIGHT_COLOR.shader[2]);
+    this.set3f('shadowColor', SHADOW_COLOR.shader[0], SHADOW_COLOR.shader[1], SHADOW_COLOR.shader[2]);
     this.bindAndDraw(target);
   }
 }
