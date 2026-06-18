@@ -21,8 +21,10 @@ const MOVE_MS = 160;
 const UNDO_MOVE_MS = 100;
 const FLAME_FRAME_MS = 90;
 const UNDO_FLASH_MS = 34;
-const UNDO_FLASH_ALPHA = 0.0;
+const UNDO_FLASH_ALPHA = 0.02;
 const GOAL_EMIT_INTERVAL_MS = 55;
+const BUMP_MS = 72;
+const BUMP_DISTANCE = 7;
 const ACTOR_ACTIVE_FRAMES = 2;
 const ACTOR_ACTIVE_FRAME_RATE = 5;
 const ACTOR_WAIT_FRAMES = 2;
@@ -31,8 +33,8 @@ const LIGHT_SOURCE_FRAMES = 6;
 const LIGHT_SOURCE_FRAME_RATE = 10;
 const TREASURE_FRAMES = 2;
 const TREASURE_FRAME_RATE = 2;
-const OUTER_WALL_FADE_PIXELS = TILE / 2;
-const OUTER_WALL_FADE_ALPHA = 0.92;
+const OUTER_WALL_FADE_PIXELS = TILE / 1.2;
+const OUTER_WALL_FADE_ALPHA = 1.0;
 
 type FacingDirection = 'left' | 'right';
 
@@ -191,7 +193,7 @@ export class GameScene extends Phaser.Scene {
 
   private performMove(direction: Direction): void {
     const before = cloneState(this.session.state);
-    const facingChanged = this.updateActorFacing(direction);
+    this.updateActorFacing(direction);
     const result = this.session.move(direction);
     if (result.died && result.deadActor && result.failedState) {
       this.inputLocked = true;
@@ -210,7 +212,7 @@ export class GameScene extends Phaser.Scene {
       return;
     }
     if (!result.accepted) {
-      if (facingChanged) this.renderBoard();
+      this.animateBlockedMove(direction);
       this.cameras.main.shake(55, 0.0015);
       return;
     }
@@ -392,6 +394,36 @@ export class GameScene extends Phaser.Scene {
     this.board.add(sprite);
   }
 
+  private animateBlockedMove(direction: Direction): void {
+    this.inputLocked = true;
+    const actor = this.session.state.activeActor;
+    const point = this.session.state.actors[actor];
+    this.renderBoard(this.session.state, actor);
+    const sprite = this.add.sprite((point.x + 0.5) * TILE, (point.y + 0.5) * TILE, actorTextureKey(actor), 0);
+    sprite.setFlipX(this.actorFacing[actor] === 'right');
+    this.playSynced(
+      sprite,
+      actorAnimationKey(actor, true),
+      ACTOR_ACTIVE_FRAMES,
+      ACTOR_ACTIVE_FRAME_RATE,
+    );
+    this.board.add(sprite);
+    const offset = directionOffset(direction, BUMP_DISTANCE);
+    this.tweens.add({
+      targets: sprite,
+      x: sprite.x + offset.x,
+      y: sprite.y + offset.y,
+      yoyo: true,
+      duration: BUMP_MS,
+      ease: 'Sine.easeOut',
+      onComplete: () => {
+        sprite.destroy();
+        this.renderBoard();
+        this.inputLocked = false;
+      },
+    });
+  }
+
   private playSynced(sprite: Phaser.GameObjects.Sprite, key: string, frameCount: number, frameRate: number): void {
     const startFrame = Math.floor((this.time.now / 1000) * frameRate) % frameCount;
     sprite.play({ key, startFrame });
@@ -481,6 +513,13 @@ export class GameScene extends Phaser.Scene {
 
 function alignToScale(value: number, scale: number): number {
   return Math.round(value / scale) * scale;
+}
+
+function directionOffset(direction: Direction, distance: number): Point {
+  if (direction === 'up') return { x: 0, y: -distance };
+  if (direction === 'down') return { x: 0, y: distance };
+  if (direction === 'left') return { x: -distance, y: 0 };
+  return { x: distance, y: 0 };
 }
 
 function sameCell(a: Point, b: Point): boolean {
