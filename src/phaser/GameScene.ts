@@ -57,6 +57,7 @@ export class GameScene extends Phaser.Scene {
   private onUndoPrompt!: SceneData['onUndoPrompt'];
   private onTitle!: SceneData['onTitle'];
   private world!: Phaser.GameObjects.Container;
+  private worldBackground!: Phaser.GameObjects.Rectangle;
   private board!: Phaser.GameObjects.Container;
   private lightMap?: Phaser.GameObjects.Image;
   private lightAnimationStep = 0;
@@ -95,9 +96,10 @@ export class GameScene extends Phaser.Scene {
   create(): void {
     this.cameras.main.setBackgroundColor(SHADOW_COLOR.css);
     this.world = this.add.container(0, 0);
+    this.worldBackground = this.add.rectangle(0, 0, 1, 1, SHADOW_COLOR.value).setOrigin(0);
     this.board = this.add.container(0, 0);
     this.goalEffectLayer = this.add.container(0, 0);
-    this.world.add([this.board, this.goalEffectLayer]);
+    this.world.add([this.worldBackground, this.board, this.goalEffectLayer]);
     this.applyOneBitFilter();
     ensureSpriteAnimations(this);
     this.cursors = this.input.keyboard!.createCursorKeys();
@@ -464,11 +466,12 @@ export class GameScene extends Phaser.Scene {
     const boardWidth = this.level.width * TILE;
     const boardHeight = this.level.height * TILE;
     const scale = this.level.displayScale;
+    const worldX = alignToScale((this.scale.width - boardWidth * scale) / 2, scale);
+    const worldY = alignToScale((this.scale.height - boardHeight * scale) / 2, scale);
     this.world.setScale(scale);
-    this.world.setPosition(
-      alignToScale((this.scale.width - boardWidth * scale) / 2, scale),
-      alignToScale((this.scale.height - boardHeight * scale) / 2, scale),
-    );
+    this.world.setPosition(worldX, worldY);
+    this.worldBackground.setPosition(-worldX / scale, -worldY / scale);
+    this.worldBackground.setSize(this.scale.width / scale, this.scale.height / scale);
     this.board.setScale(1);
     this.board.setPosition(0, 0);
     this.goalEffectLayer.setScale(1);
